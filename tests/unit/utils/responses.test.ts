@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { GocdApiError, formatErrorResponse } from "@/utils/errors.js";
+import { GocdApiError, formatErrorResponse } from "@/utils/responses.js";
 
 describe("Error Utilities", () => {
     describe("GocdApiError", () => {

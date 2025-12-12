@@ -3,7 +3,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { GoCDClient } from "@/client/gocd-client.js";
 import { allTools, handleToolCall } from "@/tools/index.js";
 import { getCurrentToken } from "@/index.js";
-import { formatJsonResponse } from "@/utils/errors.js";
+import { formatJsonResponse } from "@/utils/responses.js";
 import packageJson from "../package.json" with { type: "json" };
 
 export function createServer(client: GoCDClient): Server {

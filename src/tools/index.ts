@@ -1,4 +1,5 @@
 import { GoCDClient } from "@/client/gocd-client.js";
+import { formatUnknownToolError } from "@/utils/responses.js";
 import { pipelineTools, handlePipelineTool } from "./pipelines.js";
 import { stageTools, handleStageTool } from "./stages.js";
 import { jobTools, handleJobTool } from "./jobs.js";
@@ -26,8 +27,5 @@ export async function handleToolCall(
         return handleJobTool(boundClient, toolName, args);
     }
 
-    return {
-        content: [{ type: "text", text: `Unknown tool: ${toolName}` }],
-        isError: true,
-    };
+    return formatUnknownToolError(toolName);
 }

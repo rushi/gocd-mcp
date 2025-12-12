@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { BoundGoCDClient } from "@/client/gocd-client.js";
-import { formatErrorResponse, formatJsonResponse } from "@/utils/errors.js";
+import {
+    formatJsonResponse,
+    formatSuccessResponse,
+    formatToolError,
+    formatUnknownToolError,
+} from "@/utils/responses.js";
 
 export const getStageInstanceSchema = z.object({
     pipelineName: z.string().describe("Name of the pipeline"),
@@ -88,31 +93,21 @@ export async function handleStageTool(
             case "trigger_stage": {
                 const { pipelineName, pipelineCounter, stageName } = triggerStageSchema.parse(args);
                 await client.triggerStage(pipelineName, pipelineCounter, stageName);
-                return formatJsonResponse({
-                    success: true,
-                    message: `Stage ${stageName} triggered in ${pipelineName}/${pipelineCounter}`,
-                });
+                return formatSuccessResponse(`Stage ${stageName} triggered in ${pipelineName}/${pipelineCounter}`);
             }
 
             case "cancel_stage": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter } = cancelStageSchema.parse(args);
                 await client.cancelStage(pipelineName, pipelineCounter, stageName, stageCounter);
-                return formatJsonResponse({
-                    success: true,
-                    message: `Stage ${stageName}/${stageCounter} cancelled in ${pipelineName}/${pipelineCounter}`,
-                });
+                return formatSuccessResponse(
+                    `Stage ${stageName}/${stageCounter} cancelled in ${pipelineName}/${pipelineCounter}`,
+                );
             }
 
             default:
-                return {
-                    content: [{ type: "text", text: `Unknown stage tool: ${toolName}` }],
-                    isError: true,
-                };
+                return formatUnknownToolError(toolName, "stage");
         }
     } catch (error) {
-        return {
-            content: [{ type: "text", text: formatErrorResponse(error) }],
-            isError: true,
-        };
+        return formatToolError(error);
     }
 }

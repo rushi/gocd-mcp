@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { BoundGoCDClient } from "@/client/gocd-client.js";
-import { formatErrorResponse, formatJsonResponse } from "@/utils/errors.js";
+import {
+    formatJsonResponse,
+    formatSuccessResponse,
+    formatToolError,
+    formatUnknownToolError,
+} from "@/utils/responses.js";
 
 export const listPipelinesSchema = z.object({});
 
@@ -168,31 +173,25 @@ export async function handlePipelineTool(
             case "trigger_pipeline": {
                 const { pipelineName, environmentVariables, updateMaterials } = triggerPipelineSchema.parse(args);
                 await client.triggerPipeline(pipelineName, { environmentVariables, updateMaterials });
-                return formatJsonResponse({ success: true, message: `Pipeline ${pipelineName} triggered` });
+                return formatSuccessResponse(`Pipeline ${pipelineName} triggered`);
             }
 
             case "pause_pipeline": {
                 const { pipelineName, pauseCause } = pausePipelineSchema.parse(args);
                 await client.pausePipeline(pipelineName, pauseCause);
-                return formatJsonResponse({ success: true, message: `Pipeline ${pipelineName} paused` });
+                return formatSuccessResponse(`Pipeline ${pipelineName} paused`);
             }
 
             case "unpause_pipeline": {
                 const { pipelineName } = unpausePipelineSchema.parse(args);
                 await client.unpausePipeline(pipelineName);
-                return formatJsonResponse({ success: true, message: `Pipeline ${pipelineName} unpaused` });
+                return formatSuccessResponse(`Pipeline ${pipelineName} unpaused`);
             }
 
             default:
-                return {
-                    content: [{ type: "text", text: `Unknown pipeline tool: ${toolName}` }],
-                    isError: true,
-                };
+                return formatUnknownToolError(toolName, "pipeline");
         }
     } catch (error) {
-        return {
-            content: [{ type: "text", text: formatErrorResponse(error) }],
-            isError: true,
-        };
+        return formatToolError(error);
     }
 }

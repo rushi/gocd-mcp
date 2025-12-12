@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import nock from "nock";
 import { GoCDClient } from "@/client/gocd-client.js";
 import { Config } from "@/config.js";
-import { GocdApiError } from "@/utils/errors.js";
+import { GocdApiError } from "@/utils/responses.js";
 import pipelineStatus from "../../fixtures/pipelines/pipeline-status.json";
 import pipelineHistory from "../../fixtures/pipelines/pipeline-history.json";
 

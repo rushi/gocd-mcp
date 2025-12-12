@@ -13,7 +13,7 @@
     "dev": "dotenv -e .env -- tsx src/index.ts",
     "build": "tsc && tsc-alias",
     "format": "prettier --write -l src",
-    "inspect": "echo 'Start server with: npm run dev' && echo 'Then open: http://localhost:3000/mcp in MCP Inspector' && npx @modelcontextprotocol/inspector",
+    "inspect": "echo 'Start server with: npm run dev' && npx @modelcontextprotocol/inspector",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage"

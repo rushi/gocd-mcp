@@ -16,6 +16,28 @@ export function formatJsonResponse(data: unknown): { content: Array<{ type: "tex
     };
 }
 
+export function formatSuccessResponse(message: string): { content: Array<{ type: "text"; text: string }> } {
+    return formatJsonResponse({ success: true, message });
+}
+
+export function formatToolError(error: unknown): { content: Array<{ type: "text"; text: string }>; isError: true } {
+    return {
+        content: [{ type: "text", text: formatErrorResponse(error) }],
+        isError: true,
+    };
+}
+
+export function formatUnknownToolError(
+    toolName: string,
+    category?: string,
+): { content: Array<{ type: "text"; text: string }>; isError: true } {
+    const message = category ? `Unknown ${category} tool: ${toolName}` : `Unknown tool: ${toolName}`;
+    return {
+        content: [{ type: "text", text: message }],
+        isError: true,
+    };
+}
+
 export function formatErrorResponse(error: unknown): string {
     if (error instanceof GocdApiError) {
         if (error.statusCode === 401) {

@@ -4,7 +4,7 @@ import { isEmpty, castArray, isString } from "lodash-es";
 import qs from "qs";
 import { XMLParser } from "fast-xml-parser";
 import { GocdConfig } from "@/config.js";
-import { GocdApiError } from "@/utils/errors.js";
+import { GocdApiError } from "@/utils/responses.js";
 import {
     Pipeline,
     PipelineStatus,

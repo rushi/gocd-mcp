@@ -1,5 +1,5 @@
 import { BoundGoCDClient } from "@/client/gocd-client.js";
-import { formatErrorResponse, formatJsonResponse } from "@/utils/errors.js";
+import { formatJsonResponse, formatToolError, formatUnknownToolError } from "@/utils/responses.js";
 import { parseGocdUrl } from "@/utils/url-parser.js";
 import { z } from "zod";
 
@@ -361,15 +361,9 @@ export async function handleJobTool(
             }
 
             default:
-                return {
-                    content: [{ type: "text", text: `Unknown job tool: ${toolName}` }],
-                    isError: true,
-                };
+                return formatUnknownToolError(toolName, "job");
         }
     } catch (error) {
-        return {
-            content: [{ type: "text", text: formatErrorResponse(error) }],
-            isError: true,
-        };
+        return formatToolError(error);
     }
 }
