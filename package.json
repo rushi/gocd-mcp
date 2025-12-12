@@ -1,0 +1,53 @@
+{
+  "name": "gocd-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for GoCD continuous delivery platform",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "gocd-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "format": "prettier --write -l src",
+    "inspect": "dotenv -e .env -- npx @modelcontextprotocol/inspector npm run dev"
+  },
+  "keywords": [
+    "mcp",
+    "gocd",
+    "ci-cd",
+    "continuous-delivery"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "got": "^14.6.5",
+    "pino": "^10.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.15.0",
+    "@types/node": "^20.0.0",
+    "@types/pino": "^7.0.4",
+    "dotenv-cli": "^11.0.0",
+    "prettier": "^3.7.4",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "prettier": {
+    "semi": true,
+    "printWidth": 120,
+    "trailingComma": "all",
+    "singleQuote": false,
+    "bracketSpacing": true,
+    "useTabs": false,
+    "arrowParens": "always",
+    "bracketSameLine": false,
+    "tabWidth": 4
+  }
+}
