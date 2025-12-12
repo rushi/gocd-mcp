@@ -1,0 +1,27 @@
+{
+    "pipeline_groups": [
+        {
+            "name": "main",
+            "pipelines": [
+                {
+                    "name": "build-pipeline",
+                    "locked": false,
+                    "pause_info": {
+                        "paused": true,
+                        "paused_by": "admin",
+                        "pause_reason": "Maintenance"
+                    }
+                },
+                {
+                    "name": "deploy-pipeline",
+                    "locked": true,
+                    "pause_info": {
+                        "paused": false,
+                        "paused_by": null,
+                        "pause_reason": null
+                    }
+                }
+            ]
+        }
+    ]
+}

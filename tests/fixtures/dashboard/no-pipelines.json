@@ -1,0 +1,10 @@
+{
+    "_embedded": {
+        "pipeline_groups": [
+            {
+                "name": "empty-group",
+                "pipelines": []
+            }
+        ]
+    }
+}

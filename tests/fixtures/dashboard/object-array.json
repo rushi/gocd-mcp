@@ -1,0 +1,20 @@
+{
+    "_embedded": {
+        "pipeline_groups": [
+            {
+                "name": "main",
+                "pipelines": [
+                    {
+                        "name": "build-pipeline",
+                        "locked": false,
+                        "pause_info": {
+                            "paused": true,
+                            "paused_by": "admin",
+                            "pause_reason": "Maintenance"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

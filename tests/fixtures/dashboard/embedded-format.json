@@ -1,0 +1,42 @@
+{
+    "_embedded": {
+        "pipeline_groups": [
+            {
+                "name": "main",
+                "_embedded": {
+                    "pipelines": [
+                        {
+                            "name": "build-pipeline",
+                            "locked": false,
+                            "pause_info": {
+                                "paused": true,
+                                "paused_by": "admin",
+                                "pause_reason": "Maintenance"
+                            }
+                        },
+                        {
+                            "name": "deploy-pipeline",
+                            "locked": true,
+                            "pause_info": {
+                                "paused": false,
+                                "paused_by": null,
+                                "pause_reason": null
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "staging",
+                "_embedded": {
+                    "pipelines": [
+                        {
+                            "name": "test-pipeline",
+                            "locked": false
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

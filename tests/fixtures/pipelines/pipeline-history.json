@@ -1,0 +1,35 @@
+{
+    "pipelines": [
+        {
+            "name": "build-pipeline",
+            "counter": 10,
+            "label": "10",
+            "naturalOrder": 10,
+            "canRun": true,
+            "preparingToSchedule": false,
+            "comment": null,
+            "scheduledDate": 1640000000000,
+            "buildCause": {
+                "triggerMessage": "Triggered by admin",
+                "triggerForced": true,
+                "approver": "admin",
+                "materialRevisions": []
+            },
+            "stages": [
+                {
+                    "name": "build",
+                    "counter": 1,
+                    "status": "Passed",
+                    "result": "Passed",
+                    "approvalType": "auto",
+                    "approvedBy": null,
+                    "scheduledDate": 1640000000000,
+                    "rerunOfCounter": null,
+                    "operatePermission": true,
+                    "canRun": true,
+                    "jobs": []
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "_embedded": {
+        "pipeline_groups": [
+            {
+                "name": "main",
+                "pipelines": ["pipeline1", "pipeline2", "pipeline3"]
+            },
+            {
+                "name": "staging",
+                "pipelines": ["staging-pipeline"]
+            }
+        ]
+    }
+}
