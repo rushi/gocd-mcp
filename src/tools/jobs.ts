@@ -48,7 +48,9 @@ export const parseJUnitXmlSchema = z.object({
     stageName: z.string().describe("Name of the stage"),
     stageCounter: z.number().describe("Stage run counter"),
     jobName: z.string().describe("Name of the job"),
-    junitPath: z.string().describe("Path to the JUnit XML file (e.g., 'test-results/junit.xml' or 'reports/TEST-*.xml')"),
+    junitPath: z
+        .string()
+        .describe("Path to the JUnit XML file (e.g., 'test-results/junit.xml' or 'reports/TEST-*.xml')"),
 });
 
 export const jobTools = [
@@ -98,7 +100,8 @@ export const jobTools = [
     },
     {
         name: "list_job_artifacts",
-        description: "List all artifacts (files and folders) produced by a job, including test reports and build outputs",
+        description:
+            "List all artifacts (files and folders) produced by a job, including test reports and build outputs",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -122,7 +125,10 @@ export const jobTools = [
                 stageName: { type: "string", description: "Name of the stage" },
                 stageCounter: { type: "number", description: "Stage run counter" },
                 jobName: { type: "string", description: "Name of the job" },
-                artifactPath: { type: "string", description: "Path to the artifact file (e.g., 'test-results/junit.xml')" },
+                artifactPath: {
+                    type: "string",
+                    description: "Path to the artifact file (e.g., 'test-results/junit.xml')",
+                },
             },
             required: ["pipelineName", "pipelineCounter", "stageName", "stageCounter", "jobName", "artifactPath"],
         },

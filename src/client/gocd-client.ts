@@ -52,10 +52,7 @@ export class GocdClient {
                 ],
                 afterResponse: [
                     (response) => {
-                        logger.debug(
-                            { url: response.url, statusCode: response.statusCode },
-                            "Received API response",
-                        );
+                        logger.debug({ url: response.url, statusCode: response.statusCode }, "Received API response");
                         return response;
                     },
                 ],
@@ -228,11 +225,22 @@ export class GocdClient {
 
     async pausePipeline(token: string, name: string, reason?: string): Promise<{ success: boolean }> {
         const body = reason ? { pause_cause: reason } : undefined;
-        return this.request<{ success: boolean }>(token, "POST", `/pipelines/${encodeURIComponent(name)}/pause`, "v1", body);
+        return this.request<{ success: boolean }>(
+            token,
+            "POST",
+            `/pipelines/${encodeURIComponent(name)}/pause`,
+            "v1",
+            body,
+        );
     }
 
     async unpausePipeline(token: string, name: string): Promise<{ success: boolean }> {
-        return this.request<{ success: boolean }>(token, "POST", `/pipelines/${encodeURIComponent(name)}/unpause`, "v1");
+        return this.request<{ success: boolean }>(
+            token,
+            "POST",
+            `/pipelines/${encodeURIComponent(name)}/unpause`,
+            "v1",
+        );
     }
 
     async getStageInstance(
@@ -250,7 +258,12 @@ export class GocdClient {
         );
     }
 
-    async triggerStage(token: string, pipeline: string, pipelineCounter: number, stage: string): Promise<{ success: boolean }> {
+    async triggerStage(
+        token: string,
+        pipeline: string,
+        pipelineCounter: number,
+        stage: string,
+    ): Promise<{ success: boolean }> {
         return this.request<{ success: boolean }>(
             token,
             "POST",
@@ -274,7 +287,13 @@ export class GocdClient {
         );
     }
 
-    async getJobHistory(token: string, pipeline: string, stage: string, job: string, pageSize?: number): Promise<JobHistory> {
+    async getJobHistory(
+        token: string,
+        pipeline: string,
+        stage: string,
+        job: string,
+        pageSize?: number,
+    ): Promise<JobHistory> {
         const params = new URLSearchParams();
         if (pageSize) {
             params.set("page_size", String(pageSize));
@@ -381,7 +400,15 @@ export class GocdClient {
         junitPath: string,
     ): Promise<JUnitTestResults> {
         // Fetch the JUnit XML file
-        const xmlContent = await this.getJobArtifact(token, pipeline, pipelineCounter, stage, stageCounter, job, junitPath);
+        const xmlContent = await this.getJobArtifact(
+            token,
+            pipeline,
+            pipelineCounter,
+            stage,
+            stageCounter,
+            job,
+            junitPath,
+        );
 
         // Parse XML
         const parser = new XMLParser({
@@ -444,7 +471,8 @@ export class GocdClient {
                     failure = {
                         message: testcase.failure["@_message"] || "",
                         type: testcase.failure["@_type"] || "",
-                        content: typeof testcase.failure === "string" ? testcase.failure : testcase.failure["#text"] || "",
+                        content:
+                            typeof testcase.failure === "string" ? testcase.failure : testcase.failure["#text"] || "",
                     };
                     failedTests.push({
                         suiteName,
@@ -471,7 +499,8 @@ export class GocdClient {
                     });
                 } else if (testcase.skipped !== undefined) {
                     status = "skipped";
-                    skippedMsg = typeof testcase.skipped === "string" ? testcase.skipped : testcase.skipped["@_message"] || "";
+                    skippedMsg =
+                        typeof testcase.skipped === "string" ? testcase.skipped : testcase.skipped["@_message"] || "";
                 }
 
                 testCases.push({

@@ -79,7 +79,13 @@ export async function handleStageTool(
         switch (toolName) {
             case "get_stage_instance": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter } = getStageInstanceSchema.parse(args);
-                const instance = await client.getStageInstance(token, pipelineName, pipelineCounter, stageName, stageCounter);
+                const instance = await client.getStageInstance(
+                    token,
+                    pipelineName,
+                    pipelineCounter,
+                    stageName,
+                    stageCounter,
+                );
                 return {
                     content: [{ type: "text", text: JSON.stringify(instance, null, 2) }],
                 };
