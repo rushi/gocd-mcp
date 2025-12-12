@@ -1,6 +1,6 @@
 import got, { Got, HTTPError } from "got";
 import pino from "pino";
-import { Config } from "@/config.js";
+import { GocdConfig } from "@/config.js";
 import { GocdApiError } from "@/utils/errors.js";
 import {
     Pipeline,
@@ -25,18 +25,13 @@ const logger = pino(
 
 export class GocdClient {
     private baseUrl: string;
-    private token: string;
     private client: Got;
 
-    constructor(config: Config) {
+    constructor(config: GocdConfig) {
         this.baseUrl = config.serverUrl;
-        this.token = config.apiToken;
 
         this.client = got.extend({
             prefixUrl: `${this.baseUrl}/go/api`,
-            headers: {
-                Authorization: `Bearer ${this.token}`,
-            },
             timeout: {
                 request: 30000,
             },
@@ -64,6 +59,7 @@ export class GocdClient {
     }
 
     private async request<T>(
+        token: string,
         method: "GET" | "POST" | "DELETE",
         path: string,
         apiVersion: string,
@@ -73,6 +69,7 @@ export class GocdClient {
 
         const headers: Record<string, string> = {
             Accept: `application/vnd.go.cd.${apiVersion}+json`,
+            Authorization: `Bearer ${token}`,
         };
 
         if (path.includes("/cancel") || path.includes("/unpause") || path.includes("/pause")) {
@@ -136,8 +133,8 @@ export class GocdClient {
         }
     }
 
-    async listPipelines(): Promise<Pipeline[]> {
-        const data = await this.request<DashboardResponse>("GET", "/dashboard", "v4");
+    async listPipelines(token: string): Promise<Pipeline[]> {
+        const data = await this.request<DashboardResponse>(token, "GET", "/dashboard", "v4");
 
         logger.debug({ data }, "Dashboard response received");
 
@@ -180,11 +177,11 @@ export class GocdClient {
         });
     }
 
-    async getPipelineStatus(name: string): Promise<PipelineStatus> {
-        return this.request<PipelineStatus>("GET", `/pipelines/${encodeURIComponent(name)}/status`, "v1");
+    async getPipelineStatus(token: string, name: string): Promise<PipelineStatus> {
+        return this.request<PipelineStatus>(token, "GET", `/pipelines/${encodeURIComponent(name)}/status`, "v1");
     }
 
-    async getPipelineHistory(name: string, pageSize?: number, after?: number): Promise<PipelineHistory> {
+    async getPipelineHistory(token: string, name: string, pageSize?: number, after?: number): Promise<PipelineHistory> {
         const params = new URLSearchParams();
         if (pageSize) {
             params.set("page_size", String(pageSize));
@@ -194,14 +191,14 @@ export class GocdClient {
         }
         const query = params.toString();
         const path = `/pipelines/${encodeURIComponent(name)}/history${query ? `?${query}` : ""}`;
-        return this.request<PipelineHistory>("GET", path, "v1");
+        return this.request<PipelineHistory>(token, "GET", path, "v1");
     }
 
-    async getPipelineInstance(name: string, counter: number): Promise<PipelineInstance> {
-        return this.request<PipelineInstance>("GET", `/pipelines/${encodeURIComponent(name)}/${counter}`, "v1");
+    async getPipelineInstance(token: string, name: string, counter: number): Promise<PipelineInstance> {
+        return this.request<PipelineInstance>(token, "GET", `/pipelines/${encodeURIComponent(name)}/${counter}`, "v1");
     }
 
-    async triggerPipeline(name: string, options?: TriggerOptions): Promise<{ success: boolean }> {
+    async triggerPipeline(token: string, name: string, options?: TriggerOptions): Promise<{ success: boolean }> {
         const body: Record<string, unknown> = {};
 
         if (options?.environmentVariables) {
@@ -216,6 +213,7 @@ export class GocdClient {
         }
 
         return this.request<{ success: boolean }>(
+            token,
             "POST",
             `/pipelines/${encodeURIComponent(name)}/schedule`,
             "v1",
@@ -223,30 +221,33 @@ export class GocdClient {
         );
     }
 
-    async pausePipeline(name: string, reason?: string): Promise<{ success: boolean }> {
+    async pausePipeline(token: string, name: string, reason?: string): Promise<{ success: boolean }> {
         const body = reason ? { pause_cause: reason } : undefined;
-        return this.request<{ success: boolean }>("POST", `/pipelines/${encodeURIComponent(name)}/pause`, "v1", body);
+        return this.request<{ success: boolean }>(token, "POST", `/pipelines/${encodeURIComponent(name)}/pause`, "v1", body);
     }
 
-    async unpausePipeline(name: string): Promise<{ success: boolean }> {
-        return this.request<{ success: boolean }>("POST", `/pipelines/${encodeURIComponent(name)}/unpause`, "v1");
+    async unpausePipeline(token: string, name: string): Promise<{ success: boolean }> {
+        return this.request<{ success: boolean }>(token, "POST", `/pipelines/${encodeURIComponent(name)}/unpause`, "v1");
     }
 
     async getStageInstance(
+        token: string,
         pipeline: string,
         pipelineCounter: number,
         stage: string,
         stageCounter: number,
     ): Promise<StageInstance> {
         return this.request<StageInstance>(
+            token,
             "GET",
             `/stages/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}`,
             "v3",
         );
     }
 
-    async triggerStage(pipeline: string, pipelineCounter: number, stage: string): Promise<{ success: boolean }> {
+    async triggerStage(token: string, pipeline: string, pipelineCounter: number, stage: string): Promise<{ success: boolean }> {
         return this.request<{ success: boolean }>(
+            token,
             "POST",
             `/stages/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/run`,
             "v2",
@@ -254,29 +255,32 @@ export class GocdClient {
     }
 
     async cancelStage(
+        token: string,
         pipeline: string,
         pipelineCounter: number,
         stage: string,
         stageCounter: number,
     ): Promise<{ success: boolean }> {
         return this.request<{ success: boolean }>(
+            token,
             "POST",
             `/stages/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}/cancel`,
             "v3",
         );
     }
 
-    async getJobHistory(pipeline: string, stage: string, job: string, pageSize?: number): Promise<JobHistory> {
+    async getJobHistory(token: string, pipeline: string, stage: string, job: string, pageSize?: number): Promise<JobHistory> {
         const params = new URLSearchParams();
         if (pageSize) {
             params.set("page_size", String(pageSize));
         }
         const query = params.toString();
         const path = `/jobs/${encodeURIComponent(pipeline)}/${encodeURIComponent(stage)}/${encodeURIComponent(job)}/history${query ? `?${query}` : ""}`;
-        return this.request<JobHistory>("GET", path, "v1");
+        return this.request<JobHistory>(token, "GET", path, "v1");
     }
 
     async getJobInstance(
+        token: string,
         pipeline: string,
         pipelineCounter: number,
         stage: string,
@@ -284,6 +288,7 @@ export class GocdClient {
         job: string,
     ): Promise<JobInstance> {
         return this.request<JobInstance>(
+            token,
             "GET",
             `/jobs/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}/${encodeURIComponent(job)}`,
             "v1",

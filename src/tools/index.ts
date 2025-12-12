@@ -7,19 +7,20 @@ export const allTools = [...pipelineTools, ...stageTools, ...jobTools];
 
 export async function handleToolCall(
     client: GocdClient,
+    token: string,
     toolName: string,
     args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
-    if (pipelineTools.some((t) => t.name === toolName)) {
-        return handlePipelineTool(client, toolName, args);
+    if (pipelineTools.some((tool) => tool.name === toolName)) {
+        return handlePipelineTool(client, token, toolName, args);
     }
 
-    if (stageTools.some((t) => t.name === toolName)) {
-        return handleStageTool(client, toolName, args);
+    if (stageTools.some((tool) => tool.name === toolName)) {
+        return handleStageTool(client, token, toolName, args);
     }
 
-    if (jobTools.some((t) => t.name === toolName)) {
-        return handleJobTool(client, toolName, args);
+    if (jobTools.some((tool) => tool.name === toolName)) {
+        return handleJobTool(client, token, toolName, args);
     }
 
     return {

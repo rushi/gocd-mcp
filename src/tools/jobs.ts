@@ -51,6 +51,7 @@ export const jobTools = [
 
 export async function handleJobTool(
     client: GocdClient,
+    token: string,
     toolName: string,
     args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
@@ -58,7 +59,7 @@ export async function handleJobTool(
         switch (toolName) {
             case "get_job_history": {
                 const { pipelineName, stageName, jobName, pageSize } = getJobHistorySchema.parse(args);
-                const history = await client.getJobHistory(pipelineName, stageName, jobName, pageSize);
+                const history = await client.getJobHistory(token, pipelineName, stageName, jobName, pageSize);
                 return {
                     content: [{ type: "text", text: JSON.stringify(history, null, 2) }],
                 };
@@ -68,6 +69,7 @@ export async function handleJobTool(
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName } =
                     getJobInstanceSchema.parse(args);
                 const instance = await client.getJobInstance(
+                    token,
                     pipelineName,
                     pipelineCounter,
                     stageName,

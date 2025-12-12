@@ -8,6 +8,8 @@ This server enables AI assistants to query and manage GoCD pipelines, stages, an
 
 ## Features
 
+- **HTTP Transport**: Host the MCP server on any domain for remote access
+- **Per-User Authentication**: Users provide their own GoCD API tokens via Bearer authentication
 - **Pipeline Tools**: Query pipeline information, history, and status
 - **Stage Tools**: Manage and monitor pipeline stages
 - **Job Tools**: Access job details and execution status
@@ -38,17 +40,21 @@ For detailed API documentation, refer to the [GoCD API Reference](https://api.go
 
 ## Configuration
 
-Set the following environment variables:
+Set the following environment variables on the server:
 
 - `GOCD_SERVER_URL`: The URL of your GoCD server (e.g., `https://gocd.example.com`)
-- `GOCD_API_TOKEN`: Your [GoCD API token](https://docs.gocd.org/current/configuration/access_tokens.html) for authentication
+- `MCP_HOST`: Host to bind the MCP server to (default: `0.0.0.0`)
+- `MCP_PORT`: Port for the MCP server to listen on (default: `3000`)
 
 You can create a `.env` file in the project root:
 
 ```env
 GOCD_SERVER_URL=https://your-gocd-server.com
-GOCD_API_TOKEN=your-api-token-here
+MCP_HOST=0.0.0.0
+MCP_PORT=3000
 ```
+
+**Note:** Users connecting to the MCP server will provide their own GoCD API token when authenticating. The server does not require a shared token.
 
 ## Usage
 
@@ -64,21 +70,69 @@ Or run the built version:
 npm start
 ```
 
+The server will listen on the configured host and port (default: `http://0.0.0.0:3000`).
+
 ### Connecting to MCP Clients
 
-The server communicates via stdio and can be integrated with MCP-compatible clients like Claude Desktop or other AI assistants that support the Model Context Protocol.
+The server communicates via HTTP and exposes the MCP protocol at the `/mcp` endpoint. Users authenticate by providing their GoCD API token as a Bearer token.
 
-For inspection and testing:
-```bash
-npm run inspect
+### Installing in AI Tools
+
+#### Claude Code
+
+Add this server to your Claude Code configuration file (`~/.claude/config.json`):
+
+```json
+{
+  "mcpServers": {
+    "gocd": {
+      "url": "https://your-mcp-server-domain.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_GOCD_API_TOKEN"
+      }
+    }
+  }
+}
 ```
+
+#### GitHub Copilot (VS Code)
+
+Add this server to your Copilot settings:
+
+1. Open VS Code Settings (JSON)
+2. Add the MCP server configuration:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "gocd": {
+      "url": "https://your-mcp-server-domain.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_GOCD_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+**Important:**
+- Replace `https://your-mcp-server-domain.com` with the actual URL where your GoCD MCP server is hosted (e.g., `http://localhost:3000` for local development)
+- Replace `YOUR_GOCD_API_TOKEN` with your personal [GoCD API token](https://docs.gocd.org/current/configuration/access_tokens.html) (generate from GoCD: User Menu > Personal Access Tokens)
+- Each user provides their own GoCD API token for authentication
 
 ## Development
 
 - `npm run dev`: Run in development mode with tsx
 - `npm run build`: Compile TypeScript to JavaScript
 - `npm run format`: Format code with Prettier
-- `npm run inspect`: Run the MCP inspector for testing
+- `npm run inspect`: Open the MCP inspector for testing (server must be running separately)
+
+### Testing with MCP Inspector
+
+1. Start the server: `npm run dev`
+2. Open the inspector: `npm run inspect`
+3. In the inspector UI, connect to: `http://localhost:3000/mcp`
+4. Add header: `Authorization: Bearer YOUR_GOCD_API_TOKEN`
 
 ### Testing
 
@@ -86,6 +140,44 @@ Run tests:
 ```bash
 npm test
 ```
+
+## Troubleshooting
+
+### "Server not initialized" Error
+
+This error typically occurs when the MCP session is not properly established. To fix:
+
+1. Ensure the server is running (`npm run dev`)
+2. Disconnect and reconnect in your MCP client
+3. Verify you're connecting to the correct endpoint: `http://localhost:3000/mcp`
+4. Make sure you've included the `Authorization` header with your Bearer token
+
+### Authentication Failed
+
+If you receive an "UNAUTHORIZED" error:
+
+1. Verify your GoCD API token is valid
+2. Check the token has the necessary permissions in GoCD
+3. Ensure the Authorization header is properly formatted: `Bearer YOUR_TOKEN`
+4. Generate a new token from GoCD (User Menu > Personal Access Tokens)
+
+### Connection Refused
+
+If you cannot connect to the server:
+
+1. Check the server is running: `curl http://localhost:3000/health`
+2. Verify `MCP_HOST` and `MCP_PORT` in your `.env` file
+3. Check for port conflicts - ensure port 3000 is available
+4. If hosting remotely, ensure firewall rules allow the connection
+
+### GoCD API Errors
+
+If you receive errors from the GoCD API:
+
+1. Verify `GOCD_SERVER_URL` is correct in your `.env` file
+2. Ensure the GoCD server is accessible from the MCP server
+3. Check your GoCD server version is 19.8.0 or later
+4. Verify the pipeline/stage/job names are correct
 
 ## Requirements
 

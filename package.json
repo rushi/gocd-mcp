@@ -1,6 +1,6 @@
 {
   "name": "gocd-mcp",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "MCP server for GoCD continuous delivery platform",
   "type": "module",
   "main": "dist/index.js",
@@ -9,15 +9,14 @@
     "gocd-mcp": "dist/index.js"
   },
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
+    "start": "dotenv -e .env -- node dist/index.js",
+    "dev": "dotenv -e .env -- tsx src/index.ts",
     "build": "tsc && tsc-alias",
     "format": "prettier --write -l src",
-    "inspect": "dotenv -e .env -- npx @modelcontextprotocol/inspector npm run dev",
+    "inspect": "echo 'Start server with: npm run dev' && echo 'Then open: http://localhost:3000/mcp in MCP Inspector' && npx @modelcontextprotocol/inspector",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "mcp",
@@ -27,7 +26,9 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@fastify/compress": "^8.3.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "fastify": "^5.6.2",
     "got": "^14.6.5",
     "pino": "^10.1.0",
     "zod": "^3.24.0"

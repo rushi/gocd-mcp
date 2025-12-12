@@ -71,6 +71,7 @@ export const stageTools = [
 
 export async function handleStageTool(
     client: GocdClient,
+    token: string,
     toolName: string,
     args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
@@ -78,7 +79,7 @@ export async function handleStageTool(
         switch (toolName) {
             case "get_stage_instance": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter } = getStageInstanceSchema.parse(args);
-                const instance = await client.getStageInstance(pipelineName, pipelineCounter, stageName, stageCounter);
+                const instance = await client.getStageInstance(token, pipelineName, pipelineCounter, stageName, stageCounter);
                 return {
                     content: [{ type: "text", text: JSON.stringify(instance, null, 2) }],
                 };
@@ -86,7 +87,7 @@ export async function handleStageTool(
 
             case "trigger_stage": {
                 const { pipelineName, pipelineCounter, stageName } = triggerStageSchema.parse(args);
-                await client.triggerStage(pipelineName, pipelineCounter, stageName);
+                await client.triggerStage(token, pipelineName, pipelineCounter, stageName);
                 return {
                     content: [
                         {
@@ -102,7 +103,7 @@ export async function handleStageTool(
 
             case "cancel_stage": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter } = cancelStageSchema.parse(args);
-                await client.cancelStage(pipelineName, pipelineCounter, stageName, stageCounter);
+                await client.cancelStage(token, pipelineName, pipelineCounter, stageName, stageCounter);
                 return {
                     content: [
                         {

@@ -130,13 +130,14 @@ export const pipelineTools = [
 
 export async function handlePipelineTool(
     client: GocdClient,
+    token: string,
     toolName: string,
     args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
     try {
         switch (toolName) {
             case "list_pipelines": {
-                const pipelines = await client.listPipelines();
+                const pipelines = await client.listPipelines(token);
                 return {
                     content: [{ type: "text", text: JSON.stringify(pipelines, null, 2) }],
                 };
@@ -144,7 +145,7 @@ export async function handlePipelineTool(
 
             case "get_pipeline_status": {
                 const { pipelineName } = getPipelineStatusSchema.parse(args);
-                const status = await client.getPipelineStatus(pipelineName);
+                const status = await client.getPipelineStatus(token, pipelineName);
                 return {
                     content: [{ type: "text", text: JSON.stringify(status, null, 2) }],
                 };
@@ -152,7 +153,7 @@ export async function handlePipelineTool(
 
             case "get_pipeline_history": {
                 const { pipelineName, pageSize, after } = getPipelineHistorySchema.parse(args);
-                const history = await client.getPipelineHistory(pipelineName, pageSize, after);
+                const history = await client.getPipelineHistory(token, pipelineName, pageSize, after);
                 return {
                     content: [{ type: "text", text: JSON.stringify(history, null, 2) }],
                 };
@@ -160,7 +161,7 @@ export async function handlePipelineTool(
 
             case "get_pipeline_instance": {
                 const { pipelineName, pipelineCounter } = getPipelineInstanceSchema.parse(args);
-                const instance = await client.getPipelineInstance(pipelineName, pipelineCounter);
+                const instance = await client.getPipelineInstance(token, pipelineName, pipelineCounter);
                 return {
                     content: [{ type: "text", text: JSON.stringify(instance, null, 2) }],
                 };
@@ -168,7 +169,7 @@ export async function handlePipelineTool(
 
             case "trigger_pipeline": {
                 const { pipelineName, environmentVariables, updateMaterials } = triggerPipelineSchema.parse(args);
-                await client.triggerPipeline(pipelineName, { environmentVariables, updateMaterials });
+                await client.triggerPipeline(token, pipelineName, { environmentVariables, updateMaterials });
                 return {
                     content: [
                         {
@@ -181,7 +182,7 @@ export async function handlePipelineTool(
 
             case "pause_pipeline": {
                 const { pipelineName, pauseCause } = pausePipelineSchema.parse(args);
-                await client.pausePipeline(pipelineName, pauseCause);
+                await client.pausePipeline(token, pipelineName, pauseCause);
                 return {
                     content: [
                         {
@@ -194,7 +195,7 @@ export async function handlePipelineTool(
 
             case "unpause_pipeline": {
                 const { pipelineName } = unpausePipelineSchema.parse(args);
-                await client.unpausePipeline(pipelineName);
+                await client.unpausePipeline(token, pipelineName);
                 return {
                     content: [
                         {
