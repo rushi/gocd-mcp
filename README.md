@@ -1,4 +1,4 @@
-# gocd-mcp
+# GoCD MCP Server
 
 An MCP (Model Context Protocol) server that provides tools for interacting with [GoCD](https://www.gocd.org/), a continuous delivery platform, through AI assistants.
 
@@ -11,6 +11,18 @@ This server enables AI assistants to query and manage GoCD pipelines, stages, an
 - **Pipeline Tools**: Query pipeline information, history, and status
 - **Stage Tools**: Manage and monitor pipeline stages
 - **Job Tools**: Access job details and execution status
+
+## GoCD API Compatibility
+
+This MCP server integrates with the [GoCD REST API](https://api.gocd.org/current/) and is compatible with **GoCD 19.8.0 and later**.
+
+The server uses the following GoCD API versions:
+- **v1** - Pipeline status, history, instances, jobs
+- **v2** - Stage triggering
+- **v3** - Stage instances and cancellation
+- **v4** - Dashboard and pipeline groups
+
+For detailed API documentation, refer to the [GoCD API Reference](https://api.gocd.org/current/).
 
 ## Installation
 
@@ -29,7 +41,7 @@ This server enables AI assistants to query and manage GoCD pipelines, stages, an
 Set the following environment variables:
 
 - `GOCD_SERVER_URL`: The URL of your GoCD server (e.g., `https://gocd.example.com`)
-- `GOCD_API_TOKEN`: Your GoCD API token for authentication
+- `GOCD_API_TOKEN`: Your [GoCD API token](https://docs.gocd.org/current/configuration/access_tokens.html) for authentication
 
 You can create a `.env` file in the project root:
 
@@ -67,6 +79,13 @@ npm run inspect
 - `npm run build`: Compile TypeScript to JavaScript
 - `npm run format`: Format code with Prettier
 - `npm run inspect`: Run the MCP inspector for testing
+
+### Testing
+
+Run tests:
+```bash
+npm test
+```
 
 ## Requirements
 
