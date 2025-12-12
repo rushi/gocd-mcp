@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import nock from "nock";
-import { GocdClient } from "@/client/gocd-client.js";
+import { GoCDClient } from "@/client/gocd-client.js";
 import { Config } from "@/config.js";
 import { GocdApiError } from "@/utils/errors.js";
 import pipelineStatus from "../../fixtures/pipelines/pipeline-status.json";
@@ -12,10 +12,10 @@ describe("GocdClient API Endpoints", () => {
         apiToken: "test-token",
     };
 
-    let client: GocdClient;
+    let client: GoCDClient;
 
     beforeEach(() => {
-        client = new GocdClient(config);
+        client = new GoCDClient(config);
         nock.cleanAll();
     });
 
@@ -27,7 +27,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Authorization", "Bearer test-token")
                 .reply(200, pipelineStatus);
 
-            const status = await client.getPipelineStatus("build-pipeline");
+            const status = await client.getPipelineStatus("test-token", "build-pipeline");
 
             expect(status).toEqual(pipelineStatus);
         });
@@ -38,7 +38,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, pipelineStatus);
 
-            const status = await client.getPipelineStatus("my pipeline / test");
+            const status = await client.getPipelineStatus("test-token", "my pipeline / test");
 
             expect(status).toEqual(pipelineStatus);
         });
@@ -51,7 +51,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, pipelineHistory);
 
-            const history = await client.getPipelineHistory("build-pipeline");
+            const history = await client.getPipelineHistory("test-token", "build-pipeline");
 
             expect(history).toEqual(pipelineHistory);
         });
@@ -63,7 +63,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, pipelineHistory);
 
-            const history = await client.getPipelineHistory("build-pipeline", 10, 5);
+            const history = await client.getPipelineHistory("test-token", "build-pipeline", 10, 5);
 
             expect(history).toEqual(pipelineHistory);
         });
@@ -75,7 +75,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, pipelineHistory);
 
-            const history = await client.getPipelineHistory("build-pipeline", 20);
+            const history = await client.getPipelineHistory("test-token", "build-pipeline", 20);
 
             expect(history).toEqual(pipelineHistory);
         });
@@ -106,7 +106,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, instance);
 
-            const result = await client.getPipelineInstance("build-pipeline", 42);
+            const result = await client.getPipelineInstance("test-token", "build-pipeline", 42);
 
             expect(result).toEqual(instance);
         });
@@ -119,7 +119,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(202);
 
-            const result = await client.triggerPipeline("build-pipeline");
+            const result = await client.triggerPipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });
@@ -136,7 +136,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(202);
 
-            const result = await client.triggerPipeline("build-pipeline", {
+            const result = await client.triggerPipeline("test-token", "build-pipeline", {
                 environmentVariables: {
                     ENV_VAR_1: "value1",
                     ENV_VAR_2: "value2",
@@ -155,7 +155,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(202);
 
-            const result = await client.triggerPipeline("build-pipeline", {
+            const result = await client.triggerPipeline("test-token", "build-pipeline", {
                 updateMaterials: false,
             });
 
@@ -172,7 +172,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(202);
 
-            const result = await client.triggerPipeline("build-pipeline", {
+            const result = await client.triggerPipeline("test-token", "build-pipeline", {
                 environmentVariables: { KEY: "val" },
                 updateMaterials: true,
             });
@@ -189,7 +189,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(200);
 
-            const result = await client.pausePipeline("build-pipeline");
+            const result = await client.pausePipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });
@@ -203,7 +203,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(200);
 
-            const result = await client.pausePipeline("build-pipeline", "Maintenance window");
+            const result = await client.pausePipeline("test-token", "build-pipeline", "Maintenance window");
 
             expect(result).toEqual({ success: true });
         });
@@ -214,7 +214,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(200);
 
-            const result = await client.pausePipeline("build-pipeline");
+            const result = await client.pausePipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });
@@ -228,7 +228,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(200);
 
-            const result = await client.unpausePipeline("build-pipeline");
+            const result = await client.unpausePipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });
@@ -255,7 +255,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v3+json")
                 .reply(200, stage);
 
-            const result = await client.getStageInstance("build-pipeline", 10, "build", 1);
+            const result = await client.getStageInstance("test-token", "build-pipeline", 10, "build", 1);
 
             expect(result).toEqual(stage);
         });
@@ -266,7 +266,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v3+json")
                 .reply(200, {});
 
-            await client.getStageInstance("my pipeline", 10, "my stage", 1);
+            await client.getStageInstance("test-token", "my pipeline", 10, "my stage", 1);
 
             expect(nock.isDone()).toBe(true);
         });
@@ -279,7 +279,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v2+json")
                 .reply(202);
 
-            const result = await client.triggerStage("build-pipeline", 10, "build");
+            const result = await client.triggerStage("test-token", "build-pipeline", 10, "build");
 
             expect(result).toEqual({ success: true });
         });
@@ -293,7 +293,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(200);
 
-            const result = await client.cancelStage("build-pipeline", 10, "build", 1);
+            const result = await client.cancelStage("test-token", "build-pipeline", 10, "build", 1);
 
             expect(result).toEqual({ success: true });
         });
@@ -315,7 +315,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, jobHistory);
 
-            const result = await client.getJobHistory("build-pipeline", "build", "test-job");
+            const result = await client.getJobHistory("test-token", "build-pipeline", "build", "test-job");
 
             expect(result).toEqual(jobHistory);
         });
@@ -327,7 +327,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, { jobs: [], pagination: { offset: 0, total: 0, pageSize: 20 } });
 
-            const result = await client.getJobHistory("build-pipeline", "build", "test-job", 20);
+            const result = await client.getJobHistory("test-token", "build-pipeline", "build", "test-job", 20);
 
             expect(result.pagination.pageSize).toBe(20);
         });
@@ -350,7 +350,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, job);
 
-            const result = await client.getJobInstance("build-pipeline", 10, "build", 1, "test-job");
+            const result = await client.getJobInstance("test-token", "build-pipeline", 10, "build", 1, "test-job");
 
             expect(result).toEqual(job);
         });
@@ -361,7 +361,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v1+json")
                 .reply(200, {});
 
-            await client.getJobInstance("my pipeline", 10, "my stage", 1, "my job");
+            await client.getJobInstance("test-token", "my pipeline", 10, "my stage", 1, "my job");
 
             expect(nock.isDone()).toBe(true);
         });
@@ -374,7 +374,7 @@ describe("GocdClient API Endpoints", () => {
                 .times(3)
                 .reply(401, { message: "Unauthorized" });
 
-            const error = await client.getPipelineStatus("build-pipeline").catch((e) => e);
+            const error = await client.getPipelineStatus("test-token", "build-pipeline").catch((e) => e);
             expect(error).toBeInstanceOf(GocdApiError);
             expect(error.message).toContain("401");
         });
@@ -385,7 +385,7 @@ describe("GocdClient API Endpoints", () => {
                 .times(3)
                 .reply(403, { message: "Forbidden" });
 
-            const error = await client.getPipelineStatus("build-pipeline").catch((e) => e);
+            const error = await client.getPipelineStatus("test-token", "build-pipeline").catch((e) => e);
             expect(error).toBeInstanceOf(GocdApiError);
             expect(error.message).toContain("403");
         });
@@ -396,7 +396,7 @@ describe("GocdClient API Endpoints", () => {
                 .times(3)
                 .reply(404, { message: "Pipeline not found" });
 
-            const error = await client.getPipelineStatus("nonexistent").catch((e) => e);
+            const error = await client.getPipelineStatus("test-token", "nonexistent").catch((e) => e);
             expect(error).toBeInstanceOf(GocdApiError);
             expect(error.message).toContain("404");
         });
@@ -406,7 +406,7 @@ describe("GocdClient API Endpoints", () => {
                 .post("/go/api/pipelines/build-pipeline/schedule")
                 .reply(400, { message: "Invalid request" });
 
-            const error = await client.triggerPipeline("build-pipeline").catch((e) => e);
+            const error = await client.triggerPipeline("test-token", "build-pipeline").catch((e) => e);
             expect(error).toBeInstanceOf(GocdApiError);
             expect(error.message).toContain("400");
         });
@@ -417,17 +417,15 @@ describe("GocdClient API Endpoints", () => {
                 .times(3)
                 .reply(500, { message: "Internal server error" });
 
-            const error = await client.getPipelineStatus("build-pipeline").catch((e) => e);
+            const error = await client.getPipelineStatus("test-token", "build-pipeline").catch((e) => e);
             expect(error).toBeInstanceOf(GocdApiError);
             expect(error.message).toContain("500");
         });
 
         it("should return success for 202 accepted with no body", async () => {
-            nock("https://gocd.example.com")
-                .post("/go/api/pipelines/build-pipeline/schedule")
-                .reply(202);
+            nock("https://gocd.example.com").post("/go/api/pipelines/build-pipeline/schedule").reply(202);
 
-            const result = await client.triggerPipeline("build-pipeline");
+            const result = await client.triggerPipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });
@@ -438,7 +436,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(204);
 
-            const result = await client.unpausePipeline("build-pipeline");
+            const result = await client.unpausePipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });
@@ -449,7 +447,7 @@ describe("GocdClient API Endpoints", () => {
                 .matchHeader("X-GoCD-Confirm", "true")
                 .reply(200, {});
 
-            const result = await client.unpausePipeline("build-pipeline");
+            const result = await client.unpausePipeline("test-token", "build-pipeline");
 
             expect(result).toEqual({ success: true });
         });

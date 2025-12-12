@@ -1,4 +1,4 @@
-import { GocdClient } from "@/client/gocd-client.js";
+import { GoCDClient } from "@/client/gocd-client.js";
 import { pipelineTools, handlePipelineTool } from "./pipelines.js";
 import { stageTools, handleStageTool } from "./stages.js";
 import { jobTools, handleJobTool } from "./jobs.js";
@@ -6,21 +6,24 @@ import { jobTools, handleJobTool } from "./jobs.js";
 export const allTools = [...pipelineTools, ...stageTools, ...jobTools];
 
 export async function handleToolCall(
-    client: GocdClient,
+    client: GoCDClient,
     token: string,
     toolName: string,
     args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
+    // Create a token-bound client to simplify API calls
+    const boundClient = client.withToken(token);
+
     if (pipelineTools.some((tool) => tool.name === toolName)) {
-        return handlePipelineTool(client, token, toolName, args);
+        return handlePipelineTool(boundClient, toolName, args);
     }
 
     if (stageTools.some((tool) => tool.name === toolName)) {
-        return handleStageTool(client, token, toolName, args);
+        return handleStageTool(boundClient, toolName, args);
     }
 
     if (jobTools.some((tool) => tool.name === toolName)) {
-        return handleJobTool(client, token, toolName, args);
+        return handleJobTool(boundClient, toolName, args);
     }
 
     return {

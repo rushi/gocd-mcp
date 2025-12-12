@@ -5,7 +5,7 @@ import compress from "@fastify/compress";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { randomUUID } from "crypto";
 import { loadConfig } from "@/config.js";
-import { GocdClient } from "@/client/gocd-client.js";
+import { GoCDClient } from "@/client/gocd-client.js";
 import { createServer } from "@/server.js";
 
 // Request-scoped token storage (safe due to Node.js single-threaded execution)
@@ -17,7 +17,7 @@ export function getCurrentToken(): string | undefined {
 
 async function main(): Promise<void> {
     const config = loadConfig();
-    const client = new GocdClient(config.gocd);
+    const client = new GoCDClient(config.gocd);
 
     // Create a single MCP server instance
     const mcpServer = createServer(client);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GocdClient } from "@/client/gocd-client.js";
+import { BoundGoCDClient } from "@/client/gocd-client.js";
 import { formatErrorResponse } from "@/utils/errors.js";
 import { parseGocdUrl } from "@/utils/url-parser.js";
 
@@ -204,8 +204,7 @@ export const jobTools = [
 ];
 
 export async function handleJobTool(
-    client: GocdClient,
-    token: string,
+    client: BoundGoCDClient,
     toolName: string,
     args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
@@ -247,7 +246,6 @@ export async function handleJobTool(
                     for (const pattern of junitPatterns) {
                         try {
                             testResults = await client.parseJUnitXml(
-                                token,
                                 pipelineName,
                                 pipelineCounter,
                                 stageName,
@@ -271,7 +269,6 @@ export async function handleJobTool(
                 // Get console log for build errors
                 try {
                     const consoleLog = await client.getJobConsoleLog(
-                        token,
                         pipelineName,
                         pipelineCounter,
                         stageName,
@@ -302,7 +299,7 @@ export async function handleJobTool(
 
             case "get_job_history": {
                 const { pipelineName, stageName, jobName, pageSize } = getJobHistorySchema.parse(args);
-                const history = await client.getJobHistory(token, pipelineName, stageName, jobName, pageSize);
+                const history = await client.getJobHistory(pipelineName, stageName, jobName, pageSize);
                 return {
                     content: [{ type: "text", text: JSON.stringify(history, null, 2) }],
                 };
@@ -312,7 +309,6 @@ export async function handleJobTool(
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName } =
                     getJobInstanceSchema.parse(args);
                 const instance = await client.getJobInstance(
-                    token,
                     pipelineName,
                     pipelineCounter,
                     stageName,
@@ -328,7 +324,6 @@ export async function handleJobTool(
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName } =
                     getJobConsoleSchema.parse(args);
                 const consoleLog = await client.getJobConsoleLog(
-                    token,
                     pipelineName,
                     pipelineCounter,
                     stageName,
@@ -344,7 +339,6 @@ export async function handleJobTool(
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName } =
                     listJobArtifactsSchema.parse(args);
                 const artifacts = await client.listJobArtifacts(
-                    token,
                     pipelineName,
                     pipelineCounter,
                     stageName,
@@ -360,7 +354,6 @@ export async function handleJobTool(
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName, artifactPath } =
                     getJobArtifactSchema.parse(args);
                 const artifact = await client.getJobArtifact(
-                    token,
                     pipelineName,
                     pipelineCounter,
                     stageName,
@@ -377,7 +370,6 @@ export async function handleJobTool(
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName, junitPath } =
                     parseJUnitXmlSchema.parse(args);
                 const results = await client.parseJUnitXml(
-                    token,
                     pipelineName,
                     pipelineCounter,
                     stageName,

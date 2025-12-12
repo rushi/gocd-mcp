@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleJobTool } from "@/tools/jobs.js";
-import { GocdClient } from "@/client/gocd-client.js";
+import { BoundGoCDClient } from "@/client/gocd-client.js";
 import { GocdApiError } from "@/utils/errors.js";
 
 describe("Job Tools", () => {
-    let mockClient: GocdClient;
+    let mockBoundClient: BoundGoCDClient;
 
     beforeEach(() => {
-        mockClient = {
+        mockBoundClient = {
             getJobHistory: vi.fn(),
             getJobInstance: vi.fn(),
             listJobArtifacts: vi.fn(),
             parseJUnitXml: vi.fn(),
             getJobConsoleLog: vi.fn(),
-        } as unknown as GocdClient;
+        } as unknown as BoundGoCDClient;
     });
 
     describe("get_job_history", () => {
@@ -27,9 +27,9 @@ describe("Job Tools", () => {
                 },
             };
 
-            vi.mocked(mockClient.getJobHistory).mockResolvedValue(mockHistory);
+            vi.mocked(mockBoundClient.getJobHistory).mockResolvedValue(mockHistory);
 
-            const result = await handleJobTool(mockClient, "test-token", "get_job_history", {
+            const result = await handleJobTool(mockBoundClient, "get_job_history", {
                 pipelineName: "build-pipeline",
                 stageName: "build",
                 jobName: "test-job",
@@ -37,7 +37,12 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             expect(result.content[0].text).toBe(JSON.stringify(mockHistory, null, 2));
-            expect(mockClient.getJobHistory).toHaveBeenCalledWith("test-token", "build-pipeline", "build", "test-job", undefined);
+            expect(mockBoundClient.getJobHistory).toHaveBeenCalledWith(
+                "build-pipeline",
+                "build",
+                "test-job",
+                undefined,
+            );
         });
 
         it("should get job history with pageSize parameter", async () => {
@@ -50,9 +55,9 @@ describe("Job Tools", () => {
                 },
             };
 
-            vi.mocked(mockClient.getJobHistory).mockResolvedValue(mockHistory);
+            vi.mocked(mockBoundClient.getJobHistory).mockResolvedValue(mockHistory);
 
-            const result = await handleJobTool(mockClient, "test-token", "get_job_history", {
+            const result = await handleJobTool(mockBoundClient, "get_job_history", {
                 pipelineName: "build-pipeline",
                 stageName: "build",
                 jobName: "test-job",
@@ -60,11 +65,16 @@ describe("Job Tools", () => {
             });
 
             expect(result.isError).toBeUndefined();
-            expect(mockClient.getJobHistory).toHaveBeenCalledWith("test-token", "build-pipeline", "build", "test-job", 20);
+            expect(mockBoundClient.getJobHistory).toHaveBeenCalledWith(
+                "build-pipeline",
+                "build",
+                "test-job",
+                20,
+            );
         });
 
         it("should reject when required parameters are missing", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "get_job_history", {
+            const result = await handleJobTool(mockBoundClient, "get_job_history", {
                 pipelineName: "build-pipeline",
                 stageName: "build",
             });
@@ -74,11 +84,11 @@ describe("Job Tools", () => {
         });
 
         it("should handle errors from client", async () => {
-            vi.mocked(mockClient.getJobHistory).mockRejectedValue(
+            vi.mocked(mockBoundClient.getJobHistory).mockRejectedValue(
                 new GocdApiError(404, "Not Found", "jobs/build-pipeline/build/test-job/history", "Job not found"),
             );
 
-            const result = await handleJobTool(mockClient, "test-token", "get_job_history", {
+            const result = await handleJobTool(mockBoundClient, "get_job_history", {
                 pipelineName: "build-pipeline",
                 stageName: "build",
                 jobName: "test-job",
@@ -101,9 +111,9 @@ describe("Job Tools", () => {
                 rerun: false,
             };
 
-            vi.mocked(mockClient.getJobInstance).mockResolvedValue(mockJob);
+            vi.mocked(mockBoundClient.getJobInstance).mockResolvedValue(mockJob);
 
-            const result = await handleJobTool(mockClient, "test-token", "get_job_instance", {
+            const result = await handleJobTool(mockBoundClient, "get_job_instance", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -113,11 +123,17 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             expect(result.content[0].text).toBe(JSON.stringify(mockJob, null, 2));
-            expect(mockClient.getJobInstance).toHaveBeenCalledWith("test-token", "build-pipeline", 10, "build", 1, "test-job");
+            expect(mockBoundClient.getJobInstance).toHaveBeenCalledWith(
+                "build-pipeline",
+                10,
+                "build",
+                1,
+                "test-job",
+            );
         });
 
         it("should reject when required parameters are missing", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "get_job_instance", {
+            const result = await handleJobTool(mockBoundClient, "get_job_instance", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -129,11 +145,11 @@ describe("Job Tools", () => {
         });
 
         it("should handle authorization errors", async () => {
-            vi.mocked(mockClient.getJobInstance).mockRejectedValue(
+            vi.mocked(mockBoundClient.getJobInstance).mockRejectedValue(
                 new GocdApiError(401, "Unauthorized", "jobs/build-pipeline/10/build/1/test-job", "Not authorized"),
             );
 
-            const result = await handleJobTool(mockClient, "test-token", "get_job_instance", {
+            const result = await handleJobTool(mockBoundClient, "get_job_instance", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -148,7 +164,7 @@ describe("Job Tools", () => {
 
     describe("parse_gocd_url", () => {
         it("should parse job detail URL successfully", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "parse_gocd_url", {
+            const result = await handleJobTool(mockBoundClient, "parse_gocd_url", {
                 url: "https://gocd.example.com/go/tab/build/detail/MyPipeline/123/BuildStage/1/UnitTests",
             });
 
@@ -164,7 +180,7 @@ describe("Job Tools", () => {
         });
 
         it("should parse stage URL successfully", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "parse_gocd_url", {
+            const result = await handleJobTool(mockBoundClient, "parse_gocd_url", {
                 url: "https://gocd.example.com/go/pipelines/MyPipeline/123/BuildStage/1",
             });
 
@@ -179,7 +195,7 @@ describe("Job Tools", () => {
         });
 
         it("should parse pipeline URL successfully", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "parse_gocd_url", {
+            const result = await handleJobTool(mockBoundClient, "parse_gocd_url", {
                 url: "https://gocd.example.com/go/pipelines/MyPipeline/123",
             });
 
@@ -192,7 +208,7 @@ describe("Job Tools", () => {
         });
 
         it("should handle invalid URL", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "parse_gocd_url", {
+            const result = await handleJobTool(mockBoundClient, "parse_gocd_url", {
                 url: "not-a-valid-url",
             });
 
@@ -201,7 +217,7 @@ describe("Job Tools", () => {
         });
 
         it("should handle unrecognized GoCD URL format", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "parse_gocd_url", {
+            const result = await handleJobTool(mockBoundClient, "parse_gocd_url", {
                 url: "https://gocd.example.com/go/admin/pipelines",
             });
 
@@ -210,7 +226,7 @@ describe("Job Tools", () => {
         });
 
         it("should reject when URL parameter is missing", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "parse_gocd_url", {});
+            const result = await handleJobTool(mockBoundClient, "parse_gocd_url", {});
 
             expect(result.isError).toBe(true);
             expect(result.content[0].text).toContain("url");
@@ -263,10 +279,10 @@ describe("Job Tools", () => {
             };
             const mockConsoleLog = "Error: Build failed\nStack trace...";
 
-            vi.mocked(mockClient.parseJUnitXml).mockResolvedValue(mockJUnitResults);
-            vi.mocked(mockClient.getJobConsoleLog).mockResolvedValue(mockConsoleLog);
+            vi.mocked(mockBoundClient.parseJUnitXml).mockResolvedValue(mockJUnitResults);
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockResolvedValue(mockConsoleLog);
 
-            const result = await handleJobTool(mockClient, "test-token", "analyze_job_failures", {
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -283,10 +299,10 @@ describe("Job Tools", () => {
         });
 
         it("should handle job with no test failures or console errors", async () => {
-            vi.mocked(mockClient.parseJUnitXml).mockRejectedValue(new Error("No JUnit files found"));
-            vi.mocked(mockClient.getJobConsoleLog).mockRejectedValue(new Error("Console not available"));
+            vi.mocked(mockBoundClient.parseJUnitXml).mockRejectedValue(new Error("No JUnit files found"));
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockRejectedValue(new Error("Console not available"));
 
-            const result = await handleJobTool(mockClient, "test-token", "analyze_job_failures", {
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -324,10 +340,10 @@ describe("Job Tools", () => {
                 failedTests: [],
             };
 
-            vi.mocked(mockClient.parseJUnitXml).mockResolvedValue(mockJUnitResults);
-            vi.mocked(mockClient.getJobConsoleLog).mockRejectedValue(new Error("Console not available"));
+            vi.mocked(mockBoundClient.parseJUnitXml).mockResolvedValue(mockJUnitResults);
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockRejectedValue(new Error("Console not available"));
 
-            const result = await handleJobTool(mockClient, "test-token", "analyze_job_failures", {
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -345,10 +361,10 @@ describe("Job Tools", () => {
         it("should handle job with only console errors", async () => {
             const mockConsoleLog = "Error: Compilation failed";
 
-            vi.mocked(mockClient.parseJUnitXml).mockRejectedValue(new Error("No JUnit files"));
-            vi.mocked(mockClient.getJobConsoleLog).mockResolvedValue(mockConsoleLog);
+            vi.mocked(mockBoundClient.parseJUnitXml).mockRejectedValue(new Error("No JUnit files"));
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockResolvedValue(mockConsoleLog);
 
-            const result = await handleJobTool(mockClient, "test-token", "analyze_job_failures", {
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
                 stageName: "build",
@@ -364,7 +380,7 @@ describe("Job Tools", () => {
         });
 
         it("should reject when required parameters are missing", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "analyze_job_failures", {
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
                 pipelineName: "build-pipeline",
                 pipelineCounter: 10,
             });
@@ -376,7 +392,7 @@ describe("Job Tools", () => {
 
     describe("unknown tool", () => {
         it("should return error for unknown tool name", async () => {
-            const result = await handleJobTool(mockClient, "test-token", "unknown_tool", {});
+            const result = await handleJobTool(mockBoundClient, "unknown_tool", {});
 
             expect(result.isError).toBe(true);
             expect(result.content[0].text).toContain("Unknown job tool");

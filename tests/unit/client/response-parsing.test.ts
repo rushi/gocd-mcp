@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import nock from "nock";
-import { GocdClient } from "@/client/gocd-client.js";
+import { GoCDClient } from "@/client/gocd-client.js";
 import { Config } from "@/config.js";
 import embeddedFormat from "../../fixtures/dashboard/embedded-format.json";
 import directFormat from "../../fixtures/dashboard/direct-format.json";
@@ -15,10 +15,10 @@ describe("GoCD API Response Parsing", () => {
         apiToken: "test-token",
     };
 
-    let client: GocdClient;
+    let client: GoCDClient;
 
     beforeEach(() => {
-        client = new GocdClient(config);
+        client = new GoCDClient(config);
         nock.cleanAll();
     });
 
@@ -30,7 +30,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Authorization", "Bearer test-token")
                 .reply(200, embeddedFormat);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toHaveLength(3);
             expect(pipelines[0]).toEqual({
@@ -67,7 +67,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, directFormat);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toHaveLength(2);
             expect(pipelines[0]).toEqual({
@@ -98,7 +98,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, stringArray);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toHaveLength(4);
             expect(pipelines[0]).toEqual({
@@ -133,7 +133,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, objectArray);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toHaveLength(1);
             expect(pipelines[0]).toEqual({
@@ -154,7 +154,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, emptyGroups);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toEqual([]);
         });
@@ -165,7 +165,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, noPipelines);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toEqual([]);
         });
@@ -194,7 +194,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, dataWithNullPauseInfo);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toHaveLength(1);
             expect(pipelines[0].pauseInfo).toBeNull();
@@ -210,7 +210,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, invalidData);
 
-            await expect(client.listPipelines()).rejects.toThrow(
+            await expect(client.listPipelines("test-token")).rejects.toThrow(
                 "Invalid dashboard response: missing pipeline_groups field",
             );
         });
@@ -221,7 +221,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, embeddedFormat);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             const pausedPipeline = pipelines.find((p) => p.pauseInfo?.paused);
             expect(pausedPipeline?.pauseInfo).toHaveProperty("pausedBy");
@@ -263,7 +263,7 @@ describe("GoCD API Response Parsing", () => {
                 .matchHeader("Accept", "application/vnd.go.cd.v4+json")
                 .reply(200, mixedFormat);
 
-            const pipelines = await client.listPipelines();
+            const pipelines = await client.listPipelines("test-token");
 
             expect(pipelines).toHaveLength(2);
             expect(pipelines[0]).toEqual({

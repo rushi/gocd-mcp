@@ -28,7 +28,76 @@ const logger = pino(
     process.stderr,
 );
 
-export class GocdClient {
+/**
+ * A token-bound client instance where all methods are pre-bound with a specific GoCD API token.
+ * This type represents the return value of GoCDClient.withToken()
+ */
+export type BoundGoCDClient = {
+    listPipelines(): Promise<Pipeline[]>;
+    getPipelineStatus(name: string): Promise<PipelineStatus>;
+    getPipelineHistory(name: string, pageSize?: number, after?: number): Promise<PipelineHistory>;
+    getPipelineInstance(name: string, counter: number): Promise<PipelineInstance>;
+    triggerPipeline(name: string, options?: TriggerOptions): Promise<{ success: boolean }>;
+    pausePipeline(name: string, reason?: string): Promise<{ success: boolean }>;
+    unpausePipeline(name: string): Promise<{ success: boolean }>;
+    getStageInstance(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+    ): Promise<StageInstance>;
+    triggerStage(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+    ): Promise<{ success: boolean }>;
+    cancelStage(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+    ): Promise<{ success: boolean }>;
+    getJobHistory(pipelineName: string, stageName: string, jobName: string, pageSize?: number): Promise<JobHistory>;
+    getJobInstance(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+        jobName: string,
+    ): Promise<JobInstance>;
+    getJobConsoleLog(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+        jobName: string,
+    ): Promise<string>;
+    listJobArtifacts(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+        jobName: string,
+    ): Promise<ArtifactFile[]>;
+    getJobArtifact(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+        jobName: string,
+        artifactPath: string,
+    ): Promise<string>;
+    parseJUnitXml(
+        pipelineName: string,
+        pipelineCounter: number,
+        stageName: string,
+        stageCounter: number,
+        jobName: string,
+        junitPath: string,
+    ): Promise<JUnitTestResults>;
+};
+
+export class GoCDClient {
     private baseUrl: string;
     private client: Got;
 
@@ -536,6 +605,56 @@ export class GocdClient {
                 totalTime,
             },
             failedTests,
+        };
+    }
+
+    /**
+     * Create a token-bound client instance where all methods use the provided token.
+     * This simplifies the API by eliminating the need to pass the token to every method call.
+     *
+     * @param token - The GoCD API token to use for all requests
+     * @returns An object with all client methods pre-bound with the token
+     *
+     * @example
+     * ```ts
+     * const boundClient = client.withToken("my-token");
+     * const pipelines = await boundClient.listPipelines();
+     * const status = await boundClient.getPipelineStatus("my-pipeline");
+     * ```
+     */
+    withToken(token: string): BoundGoCDClient {
+        return {
+            listPipelines: (...args: Parameters<BoundGoCDClient["listPipelines"]>) => this.listPipelines(token, ...args),
+            getPipelineStatus: (...args: Parameters<BoundGoCDClient["getPipelineStatus"]>) =>
+                this.getPipelineStatus(token, ...args),
+            getPipelineHistory: (...args: Parameters<BoundGoCDClient["getPipelineHistory"]>) =>
+                this.getPipelineHistory(token, ...args),
+            getPipelineInstance: (...args: Parameters<BoundGoCDClient["getPipelineInstance"]>) =>
+                this.getPipelineInstance(token, ...args),
+            triggerPipeline: (...args: Parameters<BoundGoCDClient["triggerPipeline"]>) =>
+                this.triggerPipeline(token, ...args),
+            pausePipeline: (...args: Parameters<BoundGoCDClient["pausePipeline"]>) =>
+                this.pausePipeline(token, ...args),
+            unpausePipeline: (...args: Parameters<BoundGoCDClient["unpausePipeline"]>) =>
+                this.unpausePipeline(token, ...args),
+            getStageInstance: (...args: Parameters<BoundGoCDClient["getStageInstance"]>) =>
+                this.getStageInstance(token, ...args),
+            triggerStage: (...args: Parameters<BoundGoCDClient["triggerStage"]>) =>
+                this.triggerStage(token, ...args),
+            cancelStage: (...args: Parameters<BoundGoCDClient["cancelStage"]>) =>
+                this.cancelStage(token, ...args),
+            getJobHistory: (...args: Parameters<BoundGoCDClient["getJobHistory"]>) =>
+                this.getJobHistory(token, ...args),
+            getJobInstance: (...args: Parameters<BoundGoCDClient["getJobInstance"]>) =>
+                this.getJobInstance(token, ...args),
+            getJobConsoleLog: (...args: Parameters<BoundGoCDClient["getJobConsoleLog"]>) =>
+                this.getJobConsoleLog(token, ...args),
+            listJobArtifacts: (...args: Parameters<BoundGoCDClient["listJobArtifacts"]>) =>
+                this.listJobArtifacts(token, ...args),
+            getJobArtifact: (...args: Parameters<BoundGoCDClient["getJobArtifact"]>) =>
+                this.getJobArtifact(token, ...args),
+            parseJUnitXml: (...args: Parameters<BoundGoCDClient["parseJUnitXml"]>) =>
+                this.parseJUnitXml(token, ...args),
         };
     }
 }
