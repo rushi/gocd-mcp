@@ -25,7 +25,8 @@ export const cancelStageSchema = z.object({
 export const stageTools = [
     {
         name: "get_stage_instance",
-        description: "Get details of a specific stage run including jobs and their states",
+        description:
+            "Get details of a specific stage run including all jobs, their states (Scheduled, Building, Completed), results (Passed, Failed), and approval information. Use this to see which jobs failed in a stage, check stage status, or understand the overall stage execution. Essential for identifying which job to investigate when a stage fails.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -42,7 +43,8 @@ export const stageTools = [
     },
     {
         name: "trigger_stage",
-        description: "Manually trigger a specific stage in a pipeline run",
+        description:
+            "Manually trigger or rerun a specific stage in a pipeline. Use this to retry a failed stage, run a manual approval stage, or trigger a stage that requires manual intervention. Common for deployment stages or stages with manual approval gates.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -55,7 +57,8 @@ export const stageTools = [
     },
     {
         name: "cancel_stage",
-        description: "Cancel a running stage and all its jobs",
+        description:
+            "Cancel a running stage and all its jobs immediately. Use this to stop a long-running stage, abort a deployment that's going wrong, or cancel jobs that are stuck or no longer needed. All running jobs in the stage will be terminated.",
         inputSchema: {
             type: "object" as const,
             properties: {

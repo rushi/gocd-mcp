@@ -37,7 +37,8 @@ export const unpausePipelineSchema = z.object({
 export const pipelineTools = [
     {
         name: "list_pipelines",
-        description: "List all pipelines in the GoCD server with their groups and pause status",
+        description:
+            "List all pipelines in the GoCD server with their groups and pause status. Use this to discover available pipelines, check which pipelines are paused, or browse the pipeline catalog. Good starting point when you don't know the exact pipeline name.",
         inputSchema: {
             type: "object" as const,
             properties: {},
@@ -46,7 +47,8 @@ export const pipelineTools = [
     },
     {
         name: "get_pipeline_status",
-        description: "Get the current status of a pipeline including pause state, lock status, and schedulability",
+        description:
+            "Get the current status of a pipeline including pause state (paused or not), lock status (locked by another run), and schedulability (can it run now). Use this to check if a pipeline is currently running, why it's not running, or if it's paused. Quick status check without full history.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -57,7 +59,8 @@ export const pipelineTools = [
     },
     {
         name: "get_pipeline_history",
-        description: "Get the run history of a pipeline with pagination support",
+        description:
+            "Get the run history of a pipeline with pagination support. Use this to see recent pipeline runs, find the latest run, check historical results, or identify patterns in failures. Shows run numbers (counters), results, and stage information for each run. Essential for finding a specific pipeline run to investigate.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -73,7 +76,8 @@ export const pipelineTools = [
     },
     {
         name: "get_pipeline_instance",
-        description: "Get details of a specific pipeline run including build cause, materials, and stages",
+        description:
+            "Get comprehensive details of a specific pipeline run including build cause (what triggered it), materials (git commits, dependencies), and all stages with their status. Use this to understand why a pipeline ran, what code was built, or see the full pipeline execution details. Essential for investigating a specific run.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -85,7 +89,8 @@ export const pipelineTools = [
     },
     {
         name: "trigger_pipeline",
-        description: "Schedule/trigger a pipeline run, optionally with environment variables",
+        description:
+            "Schedule and trigger a new pipeline run immediately, optionally with custom environment variables. Use this to manually start a pipeline, trigger a deployment, or run a pipeline with specific configuration. Can pass environment variables to customize the run behavior. Note: Pipeline must not be paused.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -105,7 +110,8 @@ export const pipelineTools = [
     },
     {
         name: "pause_pipeline",
-        description: "Pause a pipeline to prevent automatic scheduling",
+        description:
+            "Pause a pipeline to prevent automatic scheduling and triggering. Use this to temporarily disable a pipeline during maintenance, stop automatic deployments, or prevent a problematic pipeline from running. Paused pipelines won't run automatically but can still be manually triggered. Can include a reason for the pause.",
         inputSchema: {
             type: "object" as const,
             properties: {
@@ -117,7 +123,8 @@ export const pipelineTools = [
     },
     {
         name: "unpause_pipeline",
-        description: "Unpause a previously paused pipeline",
+        description:
+            "Unpause a previously paused pipeline to resume automatic scheduling and triggering. Use this to re-enable a pipeline after maintenance, restore normal operations, or allow automatic runs to resume. The pipeline will immediately become eligible for automatic triggering based on its material changes.",
         inputSchema: {
             type: "object" as const,
             properties: {

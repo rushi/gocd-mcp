@@ -1,20 +1,41 @@
-# GoCD MCP Server
+## GoCD MCP Server
 
 An MCP (Model Context Protocol) server that provides tools for interacting with [GoCD](https://www.gocd.org/), a continuous delivery platform, through AI assistants.
 
-## Description
-
 This server enables AI assistants to query and manage GoCD pipelines, stages, and jobs via the MCP protocol. It acts as a bridge between AI tools and the GoCD REST API.
 
-## Features
+### Available Tools
 
-- **HTTP Transport**: Host the MCP server on any domain for remote access
-- **Per-User Authentication**: Users provide their own GoCD API tokens via Bearer authentication
-- **Pipeline Tools**: Query pipeline information, history, and status
-- **Stage Tools**: Manage and monitor pipeline stages
-- **Job Tools**: Access job details and execution status
+#### Pipeline Management
+- `list_pipelines` - Browse all pipelines with their groups and pause status
+- `get_pipeline_status` - Check if a pipeline is running, paused, or locked
+- `get_pipeline_history` - View recent pipeline runs and their results
+- `get_pipeline_instance` - Get detailed information about a specific pipeline run
+- `trigger_pipeline` - Manually start a pipeline run
+- `pause_pipeline` / `unpause_pipeline` - Control pipeline scheduling
 
-## GoCD API Compatibility
+#### Stage Operations
+- `get_stage_instance` - View stage details including all jobs and their status
+- `trigger_stage` - Manually trigger or retry a stage
+- `cancel_stage` - Stop a running stage
+
+#### Job Analysis
+- `parse_gocd_url` - Extract pipeline/stage/job info from GoCD URLs
+- `analyze_job_failures` - Get comprehensive failure analysis including test results and console logs
+- `get_job_history` - View job execution history
+- `get_job_instance` - Check job status and details
+- `get_job_console` - Read build logs and error output
+- `list_job_artifacts` - Browse artifacts produced by a job
+- `get_job_artifact` - Download specific artifact files
+- `parse_junit_xml` - Extract structured test results from JUnit XML reports
+
+#### Example Queries
+- "Get all errors for this job <url>" - Automatically parses URL and analyzes failures
+- "Show me why the build failed" - Finds test failures and build errors
+- "List all pipelines" - Browse available pipelines
+- "Trigger the deployment stage" - Manually run a stage
+
+### GoCD API Compatibility
 
 This MCP server integrates with the [GoCD REST API](https://api.gocd.org/current/) and is compatible with **GoCD 19.8.0 and later**.
 
@@ -26,19 +47,16 @@ The server uses the following GoCD API versions:
 
 For detailed API documentation, refer to the [GoCD API Reference](https://api.gocd.org/current/).
 
-## Installation
+### Usage
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+- `npm run dev`: Run in development mode with tsx
+- `npm run build`: Compile TypeScript to JavaScript
+- `npm run format`: Format code with Prettier
+- `npm run inspect`: Open the MCP inspector for testing (server must be running separately)
 
-2. Build the project:
-   ```bash
-   npm run build
-   ```
+The server will listen on the configured host and port (default: `http://0.0.0.0:3000`).
 
-## Configuration
+### Configuration
 
 Set the following environment variables on the server:
 
@@ -56,29 +74,11 @@ MCP_PORT=3000
 
 **Note:** Users connecting to the MCP server will provide their own GoCD API token when authenticating. The server does not require a shared token.
 
-## Usage
-
-### Running the Server
-
-Start the server in development mode:
-```bash
-npm run dev
-```
-
-Or run the built version:
-```bash
-npm start
-```
-
-The server will listen on the configured host and port (default: `http://0.0.0.0:3000`).
-
-### Connecting to MCP Clients
+#### Connecting to MCP Clients
 
 The server communicates via HTTP and exposes the MCP protocol at the `/mcp` endpoint. Users authenticate by providing their GoCD API token as a Bearer token.
 
-### Installing in AI Tools
-
-#### Claude Code
+**Claude Code**
 
 Add this server to your Claude Code configuration file (`~/.claude/config.json`):
 
@@ -95,7 +95,7 @@ Add this server to your Claude Code configuration file (`~/.claude/config.json`)
 }
 ```
 
-#### GitHub Copilot (VS Code)
+**GitHub Copilot (VS Code)**
 
 Add this server to your Copilot settings:
 
@@ -120,30 +120,22 @@ Add this server to your Copilot settings:
 - Replace `YOUR_GOCD_API_TOKEN` with your personal [GoCD API token](https://docs.gocd.org/current/configuration/access_tokens.html) (generate from GoCD: User Menu > Personal Access Tokens)
 - Each user provides their own GoCD API token for authentication
 
-## Development
+### Testing
 
-- `npm run dev`: Run in development mode with tsx
-- `npm run build`: Compile TypeScript to JavaScript
-- `npm run format`: Format code with Prettier
-- `npm run inspect`: Open the MCP inspector for testing (server must be running separately)
+```bash
+npm test
+```
 
-### Testing with MCP Inspector
+**Testing with MCP Inspector**
 
 1. Start the server: `npm run dev`
 2. Open the inspector: `npm run inspect`
 3. In the inspector UI, connect to: `http://localhost:3000/mcp`
 4. Add header: `Authorization: Bearer YOUR_GOCD_API_TOKEN`
 
-### Testing
+### Troubleshooting
 
-Run tests:
-```bash
-npm test
-```
-
-## Troubleshooting
-
-### "Server not initialized" Error
+**"Server not initialized" Error**
 
 This error typically occurs when the MCP session is not properly established. To fix:
 
@@ -152,7 +144,7 @@ This error typically occurs when the MCP session is not properly established. To
 3. Verify you're connecting to the correct endpoint: `http://localhost:3000/mcp`
 4. Make sure you've included the `Authorization` header with your Bearer token
 
-### Authentication Failed
+**Authentication Failed**
 
 If you receive an "UNAUTHORIZED" error:
 
@@ -161,7 +153,7 @@ If you receive an "UNAUTHORIZED" error:
 3. Ensure the Authorization header is properly formatted: `Bearer YOUR_TOKEN`
 4. Generate a new token from GoCD (User Menu > Personal Access Tokens)
 
-### Connection Refused
+**Connection Refused**
 
 If you cannot connect to the server:
 
@@ -170,7 +162,7 @@ If you cannot connect to the server:
 3. Check for port conflicts - ensure port 3000 is available
 4. If hosting remotely, ensure firewall rules allow the connection
 
-### GoCD API Errors
+**GoCD API Errors**
 
 If you receive errors from the GoCD API:
 
@@ -179,10 +171,10 @@ If you receive errors from the GoCD API:
 3. Check your GoCD server version is 19.8.0 or later
 4. Verify the pipeline/stage/job names are correct
 
-## Requirements
+### Requirements
 
 - Node.js >= 18.0.0 (v22+ recommended for security)
 
-## Author
+### Author
 
 Rushi Vishavadia
