@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { handleJobTool } from "../../../src/tools/jobs.js";
-import { GocdClient } from "../../../src/client/gocd-client.js";
-import { GocdApiError } from "../../../src/utils/errors.js";
+import { handleJobTool } from "@/tools/jobs.js";
+import { GocdClient } from "@/client/gocd-client.js";
+import { GocdApiError } from "@/utils/errors.js";
 
 describe("Job Tools", () => {
     let mockClient: GocdClient;

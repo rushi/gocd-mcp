@@ -1,7 +1,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { GocdClient } from "./client/gocd-client.js";
-import { allTools, handleToolCall } from "./tools/index.js";
+import { GocdClient } from "@/client/gocd-client.js";
+import { allTools, handleToolCall } from "@/tools/index.js";
 
 export function createServer(client: GocdClient): Server {
     const server = new Server(

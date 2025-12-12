@@ -1,4 +1,4 @@
-import { GocdClient } from "../client/gocd-client.js";
+import { GocdClient } from "@/client/gocd-client.js";
 import { pipelineTools, handlePipelineTool } from "./pipelines.js";
 import { stageTools, handleStageTool } from "./stages.js";
 import { jobTools, handleJobTool } from "./jobs.js";

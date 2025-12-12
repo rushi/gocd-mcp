@@ -1,7 +1,7 @@
 import got, { Got, HTTPError } from "got";
 import pino from "pino";
-import { Config } from "../config.js";
-import { GocdApiError } from "../utils/errors.js";
+import { Config } from "@/config.js";
+import { GocdApiError } from "@/utils/errors.js";
 import {
     Pipeline,
     PipelineStatus,

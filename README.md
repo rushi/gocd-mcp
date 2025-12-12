@@ -89,7 +89,7 @@ npm test
 
 ## Requirements
 
-- Node.js >= 18.0.0
+- Node.js >= 18.0.0 (v22+ recommended for security)
 
 ## Author
 

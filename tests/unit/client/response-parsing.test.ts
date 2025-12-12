@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import nock from "nock";
-import { GocdClient } from "../../../src/client/gocd-client.js";
-import { Config } from "../../../src/config.js";
+import { GocdClient } from "@/client/gocd-client.js";
+import { Config } from "@/config.js";
 import embeddedFormat from "../../fixtures/dashboard/embedded-format.json";
 import directFormat from "../../fixtures/dashboard/direct-format.json";
 import stringArray from "../../fixtures/dashboard/string-array.json";

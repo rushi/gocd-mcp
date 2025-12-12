@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { handlePipelineTool } from "../../../src/tools/pipelines.js";
-import { GocdClient } from "../../../src/client/gocd-client.js";
-import { GocdApiError } from "../../../src/utils/errors.js";
+import { handlePipelineTool } from "@/tools/pipelines.js";
+import { GocdClient } from "@/client/gocd-client.js";
+import { GocdApiError } from "@/utils/errors.js";
 
 describe("Pipeline Tools", () => {
     let mockClient: GocdClient;

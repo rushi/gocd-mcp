@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { GocdClient } from "../client/gocd-client.js";
-import { formatErrorResponse } from "../utils/errors.js";
+import { GocdClient } from "@/client/gocd-client.js";
+import { formatErrorResponse } from "@/utils/errors.js";
 
 export const getStageInstanceSchema = z.object({
     pipelineName: z.string().describe("Name of the pipeline"),

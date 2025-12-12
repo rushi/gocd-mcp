@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { GocdClient } from "../client/gocd-client.js";
-import { formatErrorResponse } from "../utils/errors.js";
+import { GocdClient } from "@/client/gocd-client.js";
+import { formatErrorResponse } from "@/utils/errors.js";
 
 export const listPipelinesSchema = z.object({});
 
