@@ -13,7 +13,12 @@ import {
     DashboardResponse,
     DashboardPipeline,
     TriggerOptions,
+    ArtifactFile,
+    JUnitTestResults,
+    JUnitTestSuite,
+    JUnitTestCase,
 } from "./types.js";
+import { XMLParser } from "fast-xml-parser";
 
 const logger = pino(
     {
@@ -293,5 +298,215 @@ export class GocdClient {
             `/jobs/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}/${encodeURIComponent(job)}`,
             "v1",
         );
+    }
+
+    async getJobConsoleLog(
+        token: string,
+        pipeline: string,
+        pipelineCounter: number,
+        stage: string,
+        stageCounter: number,
+        job: string,
+    ): Promise<string> {
+        const path = `files/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}/${encodeURIComponent(job)}/cruise-output/console.log`;
+
+        try {
+            const response = await this.client.get(path, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                prefixUrl: `${this.baseUrl}/go`,
+            });
+            return response.body;
+        } catch (error) {
+            throw new Error(`Failed to fetch console log: ${(error as Error).message}`);
+        }
+    }
+
+    async listJobArtifacts(
+        token: string,
+        pipeline: string,
+        pipelineCounter: number,
+        stage: string,
+        stageCounter: number,
+        job: string,
+    ): Promise<ArtifactFile[]> {
+        const path = `files/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}/${encodeURIComponent(job)}.json`;
+
+        try {
+            const response = await this.client.get(path, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                prefixUrl: `${this.baseUrl}/go`,
+                responseType: "json",
+            });
+            return response.body as ArtifactFile[];
+        } catch (error) {
+            throw new Error(`Failed to list artifacts: ${(error as Error).message}`);
+        }
+    }
+
+    async getJobArtifact(
+        token: string,
+        pipeline: string,
+        pipelineCounter: number,
+        stage: string,
+        stageCounter: number,
+        job: string,
+        artifactPath: string,
+    ): Promise<string> {
+        const path = `files/${encodeURIComponent(pipeline)}/${pipelineCounter}/${encodeURIComponent(stage)}/${stageCounter}/${encodeURIComponent(job)}/${artifactPath}`;
+
+        try {
+            const response = await this.client.get(path, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                prefixUrl: `${this.baseUrl}/go`,
+            });
+            return response.body;
+        } catch (error) {
+            throw new Error(`Failed to fetch artifact: ${(error as Error).message}`);
+        }
+    }
+
+    async parseJUnitXml(
+        token: string,
+        pipeline: string,
+        pipelineCounter: number,
+        stage: string,
+        stageCounter: number,
+        job: string,
+        junitPath: string,
+    ): Promise<JUnitTestResults> {
+        // Fetch the JUnit XML file
+        const xmlContent = await this.getJobArtifact(token, pipeline, pipelineCounter, stage, stageCounter, job, junitPath);
+
+        // Parse XML
+        const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: "@_",
+        });
+        const parsed = parser.parse(xmlContent);
+
+        // Handle both single testsuite and testsuites wrapper
+        let testsuites: any[] = [];
+        if (parsed.testsuites) {
+            testsuites = Array.isArray(parsed.testsuites.testsuite)
+                ? parsed.testsuites.testsuite
+                : [parsed.testsuites.testsuite];
+        } else if (parsed.testsuite) {
+            testsuites = Array.isArray(parsed.testsuite) ? parsed.testsuite : [parsed.testsuite];
+        }
+
+        const suites: JUnitTestSuite[] = [];
+        const failedTests: JUnitTestResults["failedTests"] = [];
+        let totalTests = 0;
+        let totalFailures = 0;
+        let totalErrors = 0;
+        let totalSkipped = 0;
+        let totalTime = 0;
+
+        for (const suite of testsuites) {
+            const suiteName = suite["@_name"] || "Unknown Suite";
+            const tests = parseInt(suite["@_tests"] || "0", 10);
+            const failures = parseInt(suite["@_failures"] || "0", 10);
+            const errors = parseInt(suite["@_errors"] || "0", 10);
+            const skipped = parseInt(suite["@_skipped"] || "0", 10);
+            const time = parseFloat(suite["@_time"] || "0");
+
+            totalTests += tests;
+            totalFailures += failures;
+            totalErrors += errors;
+            totalSkipped += skipped;
+            totalTime += time;
+
+            const testCases: JUnitTestCase[] = [];
+            const testcaseArray = suite.testcase
+                ? Array.isArray(suite.testcase)
+                    ? suite.testcase
+                    : [suite.testcase]
+                : [];
+
+            for (const testcase of testcaseArray) {
+                const testName = testcase["@_name"] || "Unknown Test";
+                const className = testcase["@_classname"] || "";
+                const testTime = parseFloat(testcase["@_time"] || "0");
+
+                let status: JUnitTestCase["status"] = "passed";
+                let failure: JUnitTestCase["failure"];
+                let error: JUnitTestCase["error"];
+                let skippedMsg: string | undefined;
+
+                if (testcase.failure) {
+                    status = "failed";
+                    failure = {
+                        message: testcase.failure["@_message"] || "",
+                        type: testcase.failure["@_type"] || "",
+                        content: typeof testcase.failure === "string" ? testcase.failure : testcase.failure["#text"] || "",
+                    };
+                    failedTests.push({
+                        suiteName,
+                        testName,
+                        className,
+                        message: failure.message,
+                        type: failure.type,
+                        details: failure.content,
+                    });
+                } else if (testcase.error) {
+                    status = "error";
+                    error = {
+                        message: testcase.error["@_message"] || "",
+                        type: testcase.error["@_type"] || "",
+                        content: typeof testcase.error === "string" ? testcase.error : testcase.error["#text"] || "",
+                    };
+                    failedTests.push({
+                        suiteName,
+                        testName,
+                        className,
+                        message: error.message,
+                        type: error.type,
+                        details: error.content,
+                    });
+                } else if (testcase.skipped !== undefined) {
+                    status = "skipped";
+                    skippedMsg = typeof testcase.skipped === "string" ? testcase.skipped : testcase.skipped["@_message"] || "";
+                }
+
+                testCases.push({
+                    name: testName,
+                    classname: className,
+                    time: testTime,
+                    status,
+                    failure,
+                    error,
+                    skipped: skippedMsg,
+                });
+            }
+
+            suites.push({
+                name: suiteName,
+                tests,
+                failures,
+                errors,
+                skipped,
+                time,
+                timestamp: suite["@_timestamp"],
+                testCases,
+            });
+        }
+
+        return {
+            suites,
+            summary: {
+                totalTests,
+                totalFailures,
+                totalErrors,
+                totalSkipped,
+                totalTime,
+            },
+            failedTests,
+        };
     }
 }

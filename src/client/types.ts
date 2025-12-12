@@ -152,3 +152,64 @@ export interface TriggerOptions {
     environmentVariables?: Record<string, string>;
     updateMaterials?: boolean;
 }
+
+// Artifact Types
+export interface ArtifactFile {
+    name: string;
+    url: string;
+    type: "file" | "folder";
+    files?: ArtifactFile[];
+}
+
+// JUnit XML Test Result Types
+export interface JUnitTestSuite {
+    name: string;
+    tests: number;
+    failures: number;
+    errors: number;
+    skipped: number;
+    time: number;
+    timestamp?: string;
+    testCases: JUnitTestCase[];
+}
+
+export interface JUnitTestCase {
+    name: string;
+    classname: string;
+    time: number;
+    status: "passed" | "failed" | "error" | "skipped";
+    failure?: JUnitFailure;
+    error?: JUnitError;
+    skipped?: string;
+}
+
+export interface JUnitFailure {
+    message: string;
+    type: string;
+    content: string;
+}
+
+export interface JUnitError {
+    message: string;
+    type: string;
+    content: string;
+}
+
+export interface JUnitTestResults {
+    suites: JUnitTestSuite[];
+    summary: {
+        totalTests: number;
+        totalFailures: number;
+        totalErrors: number;
+        totalSkipped: number;
+        totalTime: number;
+    };
+    failedTests: Array<{
+        suiteName: string;
+        testName: string;
+        className: string;
+        message: string;
+        type: string;
+        details: string;
+    }>;
+}
