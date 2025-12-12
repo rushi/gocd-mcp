@@ -3,26 +3,13 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { GoCDClient } from "@/client/gocd-client.js";
 import { allTools, handleToolCall } from "@/tools/index.js";
 import { getCurrentToken } from "@/index.js";
+import packageJson from "../package.json" with { type: "json" };
 
 export function createServer(client: GoCDClient): Server {
-    const server = new Server(
-        {
-            name: "gocd-mcp",
-            version: "1.0.0",
-        },
-        {
-            capabilities: {
-                tools: {},
-            },
-        },
-    );
-
-    server.setRequestHandler(ListToolsRequestSchema, async () => {
-        return { tools: allTools };
-    });
+    const server = new Server({ name: "gocd-mcp", version: packageJson.version }, { capabilities: { tools: {} } });
+    server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: allTools }));
 
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
-        // Get token from current request context
         const token = getCurrentToken();
 
         if (!token) {

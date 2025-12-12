@@ -1,7 +1,6 @@
 /**
  * Parses GoCD URLs to extract pipeline, stage, and job information
  */
-
 export interface ParsedGocdUrl {
     pipelineName: string;
     pipelineCounter: number;

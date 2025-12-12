@@ -26,12 +26,7 @@ export function loadConfig(): Config {
     }
 
     return {
-        mcp: {
-            host: mcpHost,
-            port: mcpPort,
-        },
-        gocd: {
-            serverUrl: gocdServerUrl.replace(/\/+$/, ""),
-        },
+        mcp: { host: mcpHost, port: mcpPort },
+        gocd: { serverUrl: gocdServerUrl.replace(/\/+$/, "") },
     };
 }

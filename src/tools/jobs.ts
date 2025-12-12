@@ -1,7 +1,7 @@
-import { z } from "zod";
 import { BoundGoCDClient } from "@/client/gocd-client.js";
 import { formatErrorResponse } from "@/utils/errors.js";
 import { parseGocdUrl } from "@/utils/url-parser.js";
+import { z } from "zod";
 
 export const getJobHistorySchema = z.object({
     pipelineName: z.string().describe("Name of the pipeline"),
@@ -221,18 +221,9 @@ export async function handleJobTool(
             case "analyze_job_failures": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter, jobName } =
                     analyzeJobFailuresSchema.parse(args);
+                const failures: { testFailures?: unknown; consoleErrors?: string; summary: string } = { summary: "" };
 
-                const failures: {
-                    testFailures?: unknown;
-                    consoleErrors?: string;
-                    summary: string;
-                } = {
-                    summary: "",
-                };
-
-                // Try to find and parse JUnit XML files
                 try {
-                    // Look for JUnit XML files in common locations
                     const junitPatterns = [
                         "test-results/junit.xml",
                         "test-results/TEST-*.xml",
@@ -258,15 +249,14 @@ export async function handleJobTool(
                                 break;
                             }
                         } catch {
-                            // Try next pattern
+                            // JUnit file not found at this path, try next pattern
                             continue;
                         }
                     }
                 } catch (error) {
-                    // Artifacts might not be available or parsable
+                    // Job may not have published test artifacts
                 }
 
-                // Get console log for build errors
                 try {
                     const consoleLog = await client.getJobConsoleLog(
                         pipelineName,
@@ -277,19 +267,19 @@ export async function handleJobTool(
                     );
                     failures.consoleErrors = consoleLog;
                 } catch (error) {
-                    // Console log might not be available
+                    // Job may not have console logs available yet
                 }
 
-                // Create summary
                 if (failures.testFailures) {
-                    failures.summary = "Found test failures in JUnit XML reports. ";
+                    failures.summary = "Found test failures in JUnit XML reports.";
                 }
+
                 if (failures.consoleErrors) {
                     failures.summary += "Console log available for error analysis.";
                 }
+
                 if (!failures.testFailures && !failures.consoleErrors) {
-                    failures.summary =
-                        "No test reports or console logs found. Job may still be running or no artifacts were published.";
+                    failures.summary = "No test reports or logs found. Job may be running or no artifacts published.";
                 }
 
                 return {

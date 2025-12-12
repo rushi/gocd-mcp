@@ -19,10 +19,8 @@ async function main(): Promise<void> {
     const config = loadConfig();
     const client = new GoCDClient(config.gocd);
 
-    // Create a single MCP server instance
     const mcpServer = createServer(client);
 
-    // Create a single transport that will handle all sessions
     const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (id) => {
@@ -33,28 +31,17 @@ async function main(): Promise<void> {
         },
     });
 
-    // Connect the server to the transport once
     await mcpServer.connect(transport);
 
-    // Create Fastify instance
-    const fastify = Fastify({
-        logger: false,
-        disableRequestLogging: true,
-    });
+    const fastify = Fastify({ logger: false, disableRequestLogging: true });
 
-    // Register compression plugin for gzip responses
-    await fastify.register(compress, {
-        encodings: ["gzip", "deflate"],
-    });
+    await fastify.register(compress, { encodings: ["gzip", "deflate"] });
 
-    // Remove X-Powered-By header
     fastify.addHook("onSend", async (_request, reply) => {
         reply.removeHeader("X-Powered-By");
     });
 
-    // Handle all MCP protocol requests through the single transport
     fastify.all("/mcp", async (request, reply) => {
-        // Extract Authorization header
         const authHeader = request.headers.authorization;
         const match = authHeader?.match(/^Bearer\s+(.+)$/i);
 
@@ -62,7 +49,7 @@ async function main(): Promise<void> {
         currentRequestToken = match ? match[1] : undefined;
 
         try {
-            // The transport handles session management internally
+            // Transport handles session management internally
             await transport.handleRequest(request.raw, reply.raw, request.body);
         } finally {
             // Clear token after request completes
@@ -70,12 +57,10 @@ async function main(): Promise<void> {
         }
     });
 
-    // Health check endpoint
     fastify.get("/health", async () => {
         return { status: "ok", service: "gocd-mcp" };
     });
 
-    // Graceful shutdown handlers
     const closeGracefully = async (signal: string) => {
         console.error(`${signal} received, shutting down gracefully`);
         await fastify.close();
@@ -86,12 +71,8 @@ async function main(): Promise<void> {
     process.on("SIGTERM", () => closeGracefully("SIGTERM"));
     process.on("SIGINT", () => closeGracefully("SIGINT"));
 
-    // Start server
     try {
-        await fastify.listen({
-            port: config.mcp.port,
-            host: config.mcp.host,
-        });
+        await fastify.listen({ port: config.mcp.port, host: config.mcp.host });
 
         console.error(`GoCD MCP server listening on http://${config.mcp.host}:${config.mcp.port}`);
         console.error(`MCP endpoint: http://${config.mcp.host}:${config.mcp.port}/mcp`);
