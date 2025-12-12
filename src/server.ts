@@ -3,6 +3,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { GoCDClient } from "@/client/gocd-client.js";
 import { allTools, handleToolCall } from "@/tools/index.js";
 import { getCurrentToken } from "@/index.js";
+import { formatJsonResponse } from "@/utils/errors.js";
 import packageJson from "../package.json" with { type: "json" };
 
 export function createServer(client: GoCDClient): Server {
@@ -14,16 +15,11 @@ export function createServer(client: GoCDClient): Server {
 
         if (!token) {
             return {
-                content: [
-                    {
-                        type: "text",
-                        text: JSON.stringify({
-                            error: true,
-                            code: "UNAUTHORIZED",
-                            message: "GoCD API token is required. Please provide a Bearer token for authentication.",
-                        }),
-                    },
-                ],
+                ...formatJsonResponse({
+                    error: true,
+                    code: "UNAUTHORIZED",
+                    message: "GoCD API token is required. Please provide a Bearer token for authentication.",
+                }),
                 isError: true,
             };
         }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BoundGoCDClient } from "@/client/gocd-client.js";
-import { formatErrorResponse } from "@/utils/errors.js";
+import { formatErrorResponse, formatJsonResponse } from "@/utils/errors.js";
 
 export const listPipelinesSchema = z.object({});
 
@@ -144,72 +144,43 @@ export async function handlePipelineTool(
         switch (toolName) {
             case "list_pipelines": {
                 const pipelines = await client.listPipelines();
-                return {
-                    content: [{ type: "text", text: JSON.stringify(pipelines, null, 2) }],
-                };
+                return formatJsonResponse(pipelines);
             }
 
             case "get_pipeline_status": {
                 const { pipelineName } = getPipelineStatusSchema.parse(args);
                 const status = await client.getPipelineStatus(pipelineName);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(status, null, 2) }],
-                };
+                return formatJsonResponse(status);
             }
 
             case "get_pipeline_history": {
                 const { pipelineName, pageSize, after } = getPipelineHistorySchema.parse(args);
                 const history = await client.getPipelineHistory(pipelineName, pageSize, after);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(history, null, 2) }],
-                };
+                return formatJsonResponse(history);
             }
 
             case "get_pipeline_instance": {
                 const { pipelineName, pipelineCounter } = getPipelineInstanceSchema.parse(args);
                 const instance = await client.getPipelineInstance(pipelineName, pipelineCounter);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(instance, null, 2) }],
-                };
+                return formatJsonResponse(instance);
             }
 
             case "trigger_pipeline": {
                 const { pipelineName, environmentVariables, updateMaterials } = triggerPipelineSchema.parse(args);
                 await client.triggerPipeline(pipelineName, { environmentVariables, updateMaterials });
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({ success: true, message: `Pipeline ${pipelineName} triggered` }),
-                        },
-                    ],
-                };
+                return formatJsonResponse({ success: true, message: `Pipeline ${pipelineName} triggered` });
             }
 
             case "pause_pipeline": {
                 const { pipelineName, pauseCause } = pausePipelineSchema.parse(args);
                 await client.pausePipeline(pipelineName, pauseCause);
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({ success: true, message: `Pipeline ${pipelineName} paused` }),
-                        },
-                    ],
-                };
+                return formatJsonResponse({ success: true, message: `Pipeline ${pipelineName} paused` });
             }
 
             case "unpause_pipeline": {
                 const { pipelineName } = unpausePipelineSchema.parse(args);
                 await client.unpausePipeline(pipelineName);
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({ success: true, message: `Pipeline ${pipelineName} unpaused` }),
-                        },
-                    ],
-                };
+                return formatJsonResponse({ success: true, message: `Pipeline ${pipelineName} unpaused` });
             }
 
             default:

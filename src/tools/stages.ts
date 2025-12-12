@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BoundGoCDClient } from "@/client/gocd-client.js";
-import { formatErrorResponse } from "@/utils/errors.js";
+import { formatErrorResponse, formatJsonResponse } from "@/utils/errors.js";
 
 export const getStageInstanceSchema = z.object({
     pipelineName: z.string().describe("Name of the pipeline"),
@@ -82,41 +82,25 @@ export async function handleStageTool(
             case "get_stage_instance": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter } = getStageInstanceSchema.parse(args);
                 const instance = await client.getStageInstance(pipelineName, pipelineCounter, stageName, stageCounter);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(instance, null, 2) }],
-                };
+                return formatJsonResponse(instance);
             }
 
             case "trigger_stage": {
                 const { pipelineName, pipelineCounter, stageName } = triggerStageSchema.parse(args);
                 await client.triggerStage(pipelineName, pipelineCounter, stageName);
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: `Stage ${stageName} triggered in ${pipelineName}/${pipelineCounter}`,
-                            }),
-                        },
-                    ],
-                };
+                return formatJsonResponse({
+                    success: true,
+                    message: `Stage ${stageName} triggered in ${pipelineName}/${pipelineCounter}`,
+                });
             }
 
             case "cancel_stage": {
                 const { pipelineName, pipelineCounter, stageName, stageCounter } = cancelStageSchema.parse(args);
                 await client.cancelStage(pipelineName, pipelineCounter, stageName, stageCounter);
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: `Stage ${stageName}/${stageCounter} cancelled in ${pipelineName}/${pipelineCounter}`,
-                            }),
-                        },
-                    ],
-                };
+                return formatJsonResponse({
+                    success: true,
+                    message: `Stage ${stageName}/${stageCounter} cancelled in ${pipelineName}/${pipelineCounter}`,
+                });
             }
 
             default:

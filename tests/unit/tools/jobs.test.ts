@@ -65,12 +65,7 @@ describe("Job Tools", () => {
             });
 
             expect(result.isError).toBeUndefined();
-            expect(mockBoundClient.getJobHistory).toHaveBeenCalledWith(
-                "build-pipeline",
-                "build",
-                "test-job",
-                20,
-            );
+            expect(mockBoundClient.getJobHistory).toHaveBeenCalledWith("build-pipeline", "build", "test-job", 20);
         });
 
         it("should reject when required parameters are missing", async () => {
@@ -123,13 +118,7 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             expect(result.content[0].text).toBe(JSON.stringify(mockJob, null, 2));
-            expect(mockBoundClient.getJobInstance).toHaveBeenCalledWith(
-                "build-pipeline",
-                10,
-                "build",
-                1,
-                "test-job",
-            );
+            expect(mockBoundClient.getJobInstance).toHaveBeenCalledWith("build-pipeline", 10, "build", 1, "test-job");
         });
 
         it("should reject when required parameters are missing", async () => {
@@ -314,7 +303,7 @@ describe("Job Tools", () => {
             const parsed = JSON.parse(result.content[0].text);
             expect(parsed.testFailures).toBeUndefined();
             expect(parsed.consoleErrors).toBeUndefined();
-            expect(parsed.summary).toContain("No test reports or console logs found");
+            expect(parsed.summary).toContain("No test reports or logs found");
         });
 
         it("should handle job with only test failures", async () => {

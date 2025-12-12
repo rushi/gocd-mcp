@@ -10,6 +10,12 @@ export class GocdApiError extends Error {
     }
 }
 
+export function formatJsonResponse(data: unknown): { content: Array<{ type: "text"; text: string }> } {
+    return {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+    };
+}
+
 export function formatErrorResponse(error: unknown): string {
     if (error instanceof GocdApiError) {
         if (error.statusCode === 401) {

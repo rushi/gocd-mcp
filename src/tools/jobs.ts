@@ -1,5 +1,5 @@
 import { BoundGoCDClient } from "@/client/gocd-client.js";
-import { formatErrorResponse } from "@/utils/errors.js";
+import { formatErrorResponse, formatJsonResponse } from "@/utils/errors.js";
 import { parseGocdUrl } from "@/utils/url-parser.js";
 import { z } from "zod";
 
@@ -213,9 +213,7 @@ export async function handleJobTool(
             case "parse_gocd_url": {
                 const { url } = parseGocdUrlSchema.parse(args);
                 const parsed = parseGocdUrl(url);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(parsed, null, 2) }],
-                };
+                return formatJsonResponse(parsed);
             }
 
             case "analyze_job_failures": {
@@ -282,17 +280,13 @@ export async function handleJobTool(
                     failures.summary = "No test reports or logs found. Job may be running or no artifacts published.";
                 }
 
-                return {
-                    content: [{ type: "text", text: JSON.stringify(failures, null, 2) }],
-                };
+                return formatJsonResponse(failures);
             }
 
             case "get_job_history": {
                 const { pipelineName, stageName, jobName, pageSize } = getJobHistorySchema.parse(args);
                 const history = await client.getJobHistory(pipelineName, stageName, jobName, pageSize);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(history, null, 2) }],
-                };
+                return formatJsonResponse(history);
             }
 
             case "get_job_instance": {
@@ -305,9 +299,7 @@ export async function handleJobTool(
                     stageCounter,
                     jobName,
                 );
-                return {
-                    content: [{ type: "text", text: JSON.stringify(instance, null, 2) }],
-                };
+                return formatJsonResponse(instance);
             }
 
             case "get_job_console": {
@@ -335,9 +327,7 @@ export async function handleJobTool(
                     stageCounter,
                     jobName,
                 );
-                return {
-                    content: [{ type: "text", text: JSON.stringify(artifacts, null, 2) }],
-                };
+                return formatJsonResponse(artifacts);
             }
 
             case "get_job_artifact": {
@@ -367,9 +357,7 @@ export async function handleJobTool(
                     jobName,
                     junitPath,
                 );
-                return {
-                    content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
-                };
+                return formatJsonResponse(results);
             }
 
             default:
