@@ -15,8 +15,7 @@
     "format": "prettier --write -l src",
     "inspect": "echo 'Start server with: npm run dev' && npx @modelcontextprotocol/inspector",
     "test": "vitest run",
-    "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test:watch": "vitest watch"
   },
   "keywords": [
     "mcp",
@@ -42,7 +41,6 @@
     "@types/node": "^22.19.2",
     "@types/pino": "^7.0.4",
     "@types/qs": "^6.14.0",
-    "@vitest/coverage-v8": "^2.1.9",
     "dotenv-cli": "^11.0.0",
     "nock": "^13.5.6",
     "prettier": "^3.7.4",
