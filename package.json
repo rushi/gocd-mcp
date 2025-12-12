@@ -4,6 +4,7 @@
   "description": "MCP server for GoCD continuous delivery platform",
   "type": "module",
   "main": "dist/index.js",
+  "author": "Rushi Vishavadia",
   "bin": {
     "gocd-mcp": "dist/index.js"
   },
@@ -12,7 +13,11 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "format": "prettier --write -l src",
-    "inspect": "dotenv -e .env -- npx @modelcontextprotocol/inspector npm run dev"
+    "inspect": "dotenv -e .env -- npx @modelcontextprotocol/inspector npm run dev",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "mcp",
@@ -31,10 +36,13 @@
     "@modelcontextprotocol/inspector": "^0.15.0",
     "@types/node": "^20.0.0",
     "@types/pino": "^7.0.4",
+    "@vitest/coverage-v8": "^2.1.9",
     "dotenv-cli": "^11.0.0",
+    "nock": "^13.5.6",
     "prettier": "^3.7.4",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=18.0.0"
