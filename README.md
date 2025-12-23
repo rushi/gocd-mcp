@@ -47,7 +47,7 @@ The server uses the following GoCD API versions:
 
 For detailed API documentation, refer to the [GoCD API Reference](https://api.gocd.org/current/).
 
-### Usage
+### Development
 
 - `npm run dev`: Run in development mode with tsx
 - `npm run build`: Compile TypeScript to JavaScript
@@ -56,7 +56,7 @@ For detailed API documentation, refer to the [GoCD API Reference](https://api.go
 
 The server will listen on the configured host and port (default: `http://0.0.0.0:3000`).
 
-### Configuration
+#### Configuration
 
 Set the following environment variables on the server:
 
@@ -74,7 +74,29 @@ MCP_PORT=3000
 
 **Note:** Users connecting to the MCP server will provide their own GoCD API token when authenticating. The server does not require a shared token.
 
-#### Connecting to MCP Clients
+### Deployment
+
+A `Dockerfile` has been added to this repository you can use it to run the server. Create your `.env` with the configuration and 
+
+```bash
+docker build -t gocd-mcp .
+docker run -d --env-file=.env -p <YOUR_LOCAL_PORT>:<MCP_PORT> gocd-mcp
+```
+
+#### Testing
+
+```bash
+npm test
+```
+
+**Testing with MCP Inspector**
+
+1. Start the server: `npm run dev`
+2. Open the inspector: `npm run inspect`
+3. In the inspector UI, connect to: `http://localhost:3000/mcp`
+4. Add header: `Authorization: Bearer YOUR_GOCD_API_TOKEN`
+
+### Connecting GoCD MCP to your AI
 
 The server communicates via HTTP and exposes the MCP protocol at the `/mcp` endpoint. Users authenticate by providing their GoCD API token as a Bearer token.
 
@@ -120,18 +142,6 @@ Add this server to your Copilot settings:
 - Replace `YOUR_GOCD_API_TOKEN` with your personal [GoCD API token](https://docs.gocd.org/current/configuration/access_tokens.html) (generate from GoCD: User Menu > Personal Access Tokens)
 - Each user provides their own GoCD API token for authentication
 
-### Testing
-
-```bash
-npm test
-```
-
-**Testing with MCP Inspector**
-
-1. Start the server: `npm run dev`
-2. Open the inspector: `npm run inspect`
-3. In the inspector UI, connect to: `http://localhost:3000/mcp`
-4. Add header: `Authorization: Bearer YOUR_GOCD_API_TOKEN`
 
 ### Troubleshooting
 
