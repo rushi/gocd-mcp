@@ -1,5 +1,6 @@
 import { GoCDClient } from "@/client/gocd-client.js";
 import { formatUnknownToolError } from "@/utils/responses.js";
+import { debug } from "@/utils/debug.js";
 import { pipelineTools, handlePipelineTool } from "./pipelines.js";
 import { stageTools, handleStageTool } from "./stages.js";
 import { jobTools, handleJobTool } from "./jobs.js";
@@ -16,16 +17,20 @@ export async function handleToolCall(
     const boundClient = client.withToken(token);
 
     if (pipelineTools.some((tool) => tool.name === toolName)) {
+        debug.tools("Dispatching to pipeline handler: %s", toolName);
         return handlePipelineTool(boundClient, toolName, args);
     }
 
     if (stageTools.some((tool) => tool.name === toolName)) {
+        debug.tools("Dispatching to stage handler: %s", toolName);
         return handleStageTool(boundClient, toolName, args);
     }
 
     if (jobTools.some((tool) => tool.name === toolName)) {
+        debug.tools("Dispatching to job handler: %s", toolName);
         return handleJobTool(boundClient, toolName, args);
     }
 
+    debug.tools("Unknown tool requested: %s", toolName);
     return formatUnknownToolError(toolName);
 }

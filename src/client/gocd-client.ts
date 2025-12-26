@@ -5,6 +5,7 @@ import qs from "qs";
 import { XMLParser } from "fast-xml-parser";
 import { GocdConfig } from "@/config.js";
 import { GocdApiError } from "@/utils/responses.js";
+import { debug } from "@/utils/debug.js";
 import {
     Pipeline,
     PipelineStatus,
@@ -109,11 +110,18 @@ export class GoCDClient {
             hooks: {
                 beforeRequest: [
                     (options) => {
+                        debug.client("API request: %s %s", options.method, options.url?.toString());
                         logger.debug({ url: options.url?.toString(), method: options.method }, "Making API request");
                     },
                 ],
                 afterResponse: [
                     (response) => {
+                        debug.client(
+                            "API response: %s %s (status: %d)",
+                            response.request.options.method,
+                            response.url,
+                            response.statusCode,
+                        );
                         logger.debug({ url: response.url, statusCode: response.statusCode }, "Received API response");
                         return response;
                     },

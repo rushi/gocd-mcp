@@ -27,6 +27,7 @@
   "dependencies": {
     "@fastify/compress": "^8.3.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "debug": "^4.4.3",
     "fast-xml-parser": "^5.3.3",
     "fastify": "^5.6.2",
     "got": "^14.6.5",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.17.5",
+    "@types/debug": "^4.1.12",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.19.2",
     "@types/pino": "^7.0.4",

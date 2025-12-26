@@ -74,6 +74,28 @@ MCP_PORT=3000
 
 **Note:** Users connecting to the MCP server will provide their own GoCD API token when authenticating. The server does not require a shared token.
 
+#### Debug Logging
+
+Enable debug output using the `DEBUG` environment variable:
+
+```bash
+# Enable all debug logs
+DEBUG=gocd-mcp:* npm run dev
+
+# Enable specific namespaces
+DEBUG=gocd-mcp:tools,gocd-mcp:client npm run dev
+
+# With Docker
+docker run -d -e DEBUG=gocd-mcp:* --env-file=.env -p 3000:3000 gocd-mcp
+```
+
+Available namespaces:
+- `gocd-mcp:server` - Server startup and shutdown
+- `gocd-mcp:http` - HTTP requests to the MCP endpoint
+- `gocd-mcp:session` - MCP session lifecycle
+- `gocd-mcp:tools` - Tool calls and dispatch
+- `gocd-mcp:client` - GoCD API requests
+
 ### Deployment
 
 A `Dockerfile` has been added to this repository you can use it to run the server. Create your `.env` with the configuration and 
@@ -81,6 +103,9 @@ A `Dockerfile` has been added to this repository you can use it to run the serve
 ```bash
 docker build -t gocd-mcp .
 docker run -d --env-file=.env -p <YOUR_LOCAL_PORT>:<MCP_PORT> gocd-mcp
+
+# With debug logging enabled
+docker run -d -e DEBUG=gocd-mcp:* --env-file=.env -p <YOUR_LOCAL_PORT>:<MCP_PORT> gocd-mcp
 ```
 
 #### Testing
