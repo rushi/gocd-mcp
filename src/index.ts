@@ -16,6 +16,27 @@ export function getCurrentToken(): string | undefined {
     return currentRequestToken;
 }
 
+/**
+ * Check if the request body is an MCP initialize request
+ */
+function isInitializeRequest(body: unknown): boolean {
+    if (!body || typeof body !== "object") {
+        return false;
+    }
+
+    // Handle single request
+    if ("method" in body && (body as { method: string }).method === "initialize") {
+        return true;
+    }
+
+    // Handle batch requests - check if any is an initialize request
+    if (Array.isArray(body)) {
+        return body.some((msg) => msg && typeof msg === "object" && "method" in msg && msg.method === "initialize");
+    }
+
+    return false;
+}
+
 async function main(): Promise<void> {
     debug.server("Starting GoCD MCP server");
     const config = loadConfig();
@@ -26,20 +47,10 @@ async function main(): Promise<void> {
 
     const mcpServer = createServer(client);
 
-    const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (id) => {
-            debug.session("Session initialized: %s", id);
-            console.error(`MCP session initialized: ${id}`);
-        },
-        onsessionclosed: (id) => {
-            debug.session("Session closed: %s", id);
-            console.error(`MCP session closed: ${id}`);
-        },
-    });
+    // Store active transports by session ID for stateful mode
+    const transports = new Map<string, StreamableHTTPServerTransport>();
 
-    await mcpServer.connect(transport);
-    debug.server("MCP server connected to transport");
+    debug.server("MCP server initialized (stateful mode with per-session transports)");
 
     const fastify = Fastify({ logger: false, disableRequestLogging: true });
 
@@ -53,14 +64,58 @@ async function main(): Promise<void> {
         const authHeader = request.headers.authorization;
         const match = authHeader?.match(/^Bearer\s+(.+)$/i);
         const hasToken = !!match;
+        const sessionId = request.headers["mcp-session-id"] as string | undefined;
 
-        debug.http("MCP request received: %s %s (hasToken: %s)", request.method, request.url, hasToken);
+        debug.http(
+            "MCP request received: %s %s (hasToken: %s, sessionId: %s)",
+            request.method,
+            request.url,
+            hasToken,
+            sessionId ?? "none",
+        );
 
         // Store token for this request (Node.js single-threaded execution ensures safety)
         currentRequestToken = match ? match[1] : undefined;
 
         try {
-            // Transport handles session management internally
+            // Check for existing session transport
+            let transport = sessionId ? transports.get(sessionId) : undefined;
+
+            // Handle initialization requests (no session ID yet)
+            if (!transport) {
+                // For non-initialization requests with invalid/missing session, return error
+                const isInitRequest = request.method === "POST" && isInitializeRequest(request.body);
+
+                if (!isInitRequest && sessionId) {
+                    debug.session("Session not found: %s - client should reinitialize", sessionId);
+                    reply.code(404).send({
+                        jsonrpc: "2.0",
+                        error: { code: -32000, message: "Session not found. Please reinitialize." },
+                        id: null,
+                    });
+                    return;
+                }
+
+                // Create new transport for new session
+                transport = new StreamableHTTPServerTransport({
+                    sessionIdGenerator: () => randomUUID(),
+                    onsessioninitialized: (id) => {
+                        debug.session("Session initialized: %s", id);
+                        console.error(`MCP session initialized: ${id}`);
+                        transports.set(id, transport!);
+                    },
+                    onsessionclosed: (id) => {
+                        debug.session("Session closed: %s", id);
+                        console.error(`MCP session closed: ${id}`);
+                        transports.delete(id);
+                    },
+                });
+
+                // Connect new transport to the MCP server
+                await mcpServer.connect(transport);
+                debug.session("New transport created and connected");
+            }
+
             await transport.handleRequest(request.raw, reply.raw, request.body);
             debug.http("MCP request completed: %s %s", request.method, request.url);
         } finally {
