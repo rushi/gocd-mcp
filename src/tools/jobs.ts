@@ -1,6 +1,7 @@
 import { BoundGoCDClient } from "@/client/gocd-client.js";
 import { formatJsonResponse, formatToolError, formatUnknownToolError } from "@/utils/responses.js";
 import { parseGocdUrl } from "@/utils/url-parser.js";
+import { debug } from "@/utils/debug.js";
 import { z } from "zod";
 
 export const getJobHistorySchema = z.object({
@@ -243,6 +244,7 @@ export async function handleJobTool(
                                 pattern,
                             );
                             if (testResults) {
+                                debug.tools(`Found JUnit file at pattern: ${pattern}`);
                                 failures.testFailures = testResults;
                                 break;
                             }
@@ -263,6 +265,9 @@ export async function handleJobTool(
                         stageCounter,
                         jobName,
                     );
+                    if (!failures.testFailures) {
+                        debug.tools("No JUnit files found, falling back to console logs for error analysis");
+                    }
                     failures.consoleErrors = consoleLog;
                 } catch (error) {
                     // Job may not have console logs available yet
