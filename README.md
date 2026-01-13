@@ -127,19 +127,8 @@ The server communicates via HTTP and exposes the MCP protocol at the `/mcp` endp
 
 **Claude Code**
 
-Add this server to your Claude Code configuration file (`~/.claude/config.json`):
-
-```json
-{
-  "mcpServers": {
-    "gocd": {
-      "url": "https://your-mcp-server-domain.com/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_GOCD_API_TOKEN"
-      }
-    }
-  }
-}
+```
+claude mcp add --transport http gocd-mcp https://api.example.com/mcp  --header "Authorization: Bearer your-gocd-token"
 ```
 
 **GitHub Copilot (VS Code)**
