@@ -224,12 +224,21 @@ export async function handleJobTool(
 
                 try {
                     const junitPatterns = [
+                        // Common specific paths
+                        "testoutput/junit.xml",
                         "test-results/junit.xml",
                         "test-results/TEST-*.xml",
-                        "target/surefire-reports/TEST-*.xml",
-                        "build/test-results/**/*.xml",
                         "reports/junit.xml",
                         "reports/TEST-*.xml",
+
+                        // Build tool specific paths
+                        "target/surefire-reports/TEST-*.xml",
+                        "build/test-results/**/*.xml",
+
+                        // Generic fallback patterns to catch other folder structures
+                        "**/junit.xml",
+                        "**/*junit*.xml",
+                        "**/TEST-*.xml",
                     ];
 
                     let testResults = null;
@@ -244,7 +253,7 @@ export async function handleJobTool(
                                 pattern,
                             );
                             if (testResults) {
-                                debug.tools(`Found JUnit file at pattern: ${pattern}`);
+                                debug.tools(`✅ Found JUnit file at pattern: ${pattern}`);
                                 failures.testFailures = testResults;
                                 break;
                             }

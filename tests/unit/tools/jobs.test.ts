@@ -377,6 +377,123 @@ describe("Job Tools", () => {
             expect(result.isError).toBe(true);
             expect(result.content[0].text).toContain("stageName");
         });
+
+        it("should try multiple JUnit patterns in order until one succeeds", async () => {
+            const mockJUnitResults = {
+                suites: [],
+                summary: {
+                    totalTests: 0,
+                    totalFailures: 0,
+                    totalErrors: 0,
+                    totalSkipped: 0,
+                    totalTime: 0,
+                },
+                failedTests: [],
+            };
+
+            // First two patterns fail, third one succeeds
+            vi.mocked(mockBoundClient.parseJUnitXml)
+                .mockRejectedValueOnce(new Error("Not found"))
+                .mockRejectedValueOnce(new Error("Not found"))
+                .mockResolvedValueOnce(mockJUnitResults);
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockResolvedValue("");
+
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
+                pipelineName: "build-pipeline",
+                pipelineCounter: 10,
+                stageName: "build",
+                stageCounter: 1,
+                jobName: "test-job",
+            });
+
+            expect(result.isError).toBeUndefined();
+            const parsed = JSON.parse(result.content[0].text);
+            expect(parsed.testFailures).toEqual(mockJUnitResults);
+            // Should have tried 3 patterns before succeeding
+            expect(mockBoundClient.parseJUnitXml).toHaveBeenCalledTimes(3);
+        });
+
+        it("should try testoutput/junit.xml pattern for Xola-specific structure", async () => {
+            const mockJUnitResults = {
+                suites: [],
+                summary: {
+                    totalTests: 0,
+                    totalFailures: 0,
+                    totalErrors: 0,
+                    totalSkipped: 0,
+                    totalTime: 0,
+                },
+                failedTests: [],
+            };
+
+            vi.mocked(mockBoundClient.parseJUnitXml).mockResolvedValue(mockJUnitResults);
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockResolvedValue("");
+
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
+                pipelineName: "build-pipeline",
+                pipelineCounter: 10,
+                stageName: "build",
+                stageCounter: 1,
+                jobName: "test-job",
+            });
+
+            expect(result.isError).toBeUndefined();
+            // First pattern tried should be testoutput/junit.xml
+            expect(mockBoundClient.parseJUnitXml).toHaveBeenCalledWith(
+                "build-pipeline",
+                10,
+                "build",
+                1,
+                "test-job",
+                "testoutput/junit.xml",
+            );
+        });
+
+        it("should fall back to generic patterns when specific paths fail", async () => {
+            const mockJUnitResults = {
+                suites: [],
+                summary: {
+                    totalTests: 0,
+                    totalFailures: 0,
+                    totalErrors: 0,
+                    totalSkipped: 0,
+                    totalTime: 0,
+                },
+                failedTests: [],
+            };
+
+            // Specific patterns count: testoutput, test-results (2), reports (2), target, build = 7 total
+            // Generic patterns: **/junit.xml, **/*junit*.xml, **/TEST-*.xml
+            // We want to fail all specific ones and succeed on the first generic one (index 7)
+            let callCount = 0;
+            vi.mocked(mockBoundClient.parseJUnitXml).mockImplementation(async (...args) => {
+                callCount++;
+                if (callCount <= 7) {
+                    // First 7 calls (specific patterns) should fail
+                    throw new Error("Not found");
+                }
+                // 8th call onwards (generic patterns) should succeed
+                return mockJUnitResults;
+            });
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockResolvedValue("");
+
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
+                pipelineName: "build-pipeline",
+                pipelineCounter: 10,
+                stageName: "build",
+                stageCounter: 1,
+                jobName: "test-job",
+            });
+
+            expect(result.isError).toBeUndefined();
+            const parsed = JSON.parse(result.content[0].text);
+            expect(parsed.testFailures).toEqual(mockJUnitResults);
+            // Should have tried 8 patterns total (7 specific + 1 generic that succeeded)
+            expect(mockBoundClient.parseJUnitXml).toHaveBeenCalledTimes(8);
+            // The 8th call should be the first generic pattern
+            const eighthCall = vi.mocked(mockBoundClient.parseJUnitXml).mock.calls[7];
+            expect(eighthCall[5]).toBe("**/junit.xml");
+        });
     });
 
     describe("unknown tool", () => {
