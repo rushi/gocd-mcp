@@ -13,6 +13,7 @@
     "dev": "dotenv -e .env -- tsx src/index.ts",
     "build": "tsc && tsc-alias",
     "docker:build": "docker build -t gocd-mcp .",
+    "docker:logs": "docker logs -f gocd-mcp",
     "format": "prettier --write -l src",
     "inspect": "echo 'Start server with: npm run dev' && npx @modelcontextprotocol/inspector",
     "test": "vitest run",
