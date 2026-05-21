@@ -131,7 +131,7 @@ export class GoCDClient {
     }
 
     private buildHeaders(token: string, headers: Record<string, string> = {}): Record<string, string> {
-        if (token === "") {
+        if (!token) {
             return { ...headers };
         }
 
