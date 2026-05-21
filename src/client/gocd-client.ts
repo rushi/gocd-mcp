@@ -130,6 +130,17 @@ export class GoCDClient {
         });
     }
 
+    private buildHeaders(token: string, headers: Record<string, string> = {}): Record<string, string> {
+        if (token === "") {
+            return { ...headers };
+        }
+
+        return {
+            ...headers,
+            Authorization: `Bearer ${token}`,
+        };
+    }
+
     private async request<T>(
         token: string,
         method: "GET" | "POST" | "DELETE",
@@ -139,10 +150,9 @@ export class GoCDClient {
     ): Promise<T> {
         const normalizedPath = path.startsWith("/") ? path.substring(1) : path;
 
-        const headers: Record<string, string> = {
+        const headers = this.buildHeaders(token, {
             Accept: `application/vnd.go.cd.${apiVersion}+json`,
-            Authorization: `Bearer ${token}`,
-        };
+        });
 
         if (path.includes("/cancel") || path.includes("/unpause") || path.includes("/pause")) {
             headers["X-GoCD-Confirm"] = "true";
@@ -372,7 +382,7 @@ export class GoCDClient {
 
         try {
             const response = await this.client.get(path, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: this.buildHeaders(token),
                 prefixUrl: `${this.baseUrl}/go`,
             });
             return response.body;
@@ -393,7 +403,7 @@ export class GoCDClient {
 
         try {
             const response = await this.client.get(path, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: this.buildHeaders(token),
                 prefixUrl: `${this.baseUrl}/go`,
                 responseType: "json",
             });
@@ -416,7 +426,7 @@ export class GoCDClient {
 
         try {
             const response = await this.client.get(path, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: this.buildHeaders(token),
                 prefixUrl: `${this.baseUrl}/go`,
             });
             return response.body;
