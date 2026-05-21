@@ -22,19 +22,7 @@ export function createServer(client: GoCDClient): Server {
 
         const token = getCurrentToken();
 
-        if (!token) {
-            debug.tools("Tool call rejected: no auth token provided");
-            return {
-                ...formatJsonResponse({
-                    error: true,
-                    code: "UNAUTHORIZED",
-                    message: "GoCD API token is required. Please provide a Bearer token for authentication.",
-                }),
-                isError: true,
-            };
-        }
-
-        const result = await handleToolCall(client, token, name, (args as Record<string, unknown>) || {});
+        const result = await handleToolCall(client, token || '', name, (args as Record<string, unknown>) || {});
         debug.tools("Tool call completed: %s (isError: %s)", name, result.isError ?? false);
         return result;
     });
