@@ -32,6 +32,20 @@ describe("GocdClient API Endpoints", () => {
             expect(status).toEqual(pipelineStatus);
         });
 
+        it("should omit authorization header when token is empty", async () => {
+            nock("https://gocd.example.com")
+                .get("/go/api/pipelines/build-pipeline/status")
+                .matchHeader("Accept", "application/vnd.go.cd.v1+json")
+                .reply(function () {
+                    expect(this.req.headers.authorization).toBeUndefined();
+                    return [200, pipelineStatus];
+                });
+
+            const status = await client.getPipelineStatus("", "build-pipeline");
+
+            expect(status).toEqual(pipelineStatus);
+        });
+
         it("should URL encode pipeline names with special characters", async () => {
             nock("https://gocd.example.com")
                 .get("/go/api/pipelines/my%20pipeline%20%2F%20test/status")
@@ -364,6 +378,21 @@ describe("GocdClient API Endpoints", () => {
             await client.getJobInstance("test-token", "my pipeline", 10, "my stage", 1, "my job");
 
             expect(nock.isDone()).toBe(true);
+        });
+    });
+
+    describe("getJobConsoleLog()", () => {
+        it("should omit authorization header when token is empty", async () => {
+            nock("https://gocd.example.com")
+                .get("/go/files/build-pipeline/10/build/1/test-job/cruise-output/console.log")
+                .reply(function () {
+                    expect(this.req.headers.authorization).toBeUndefined();
+                    return [200, "console output"];
+                });
+
+            const result = await client.getJobConsoleLog("", "build-pipeline", 10, "build", 1, "test-job");
+
+            expect(result).toBe("console output");
         });
     });
 
