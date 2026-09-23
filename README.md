@@ -2,7 +2,7 @@
 
 An MCP (Model Context Protocol) server that provides tools for interacting with [GoCD](https://www.gocd.org/), a continuous delivery platform, through AI assistants.
 
-This server enables AI assistants to query and manage GoCD pipelines, stages, and jobs via the MCP protocol. It acts as a bridge between AI tools and the GoCD REST API.
+It exposes the GoCD REST API as MCP tools, so an assistant can query and manage pipelines, stages, and jobs.
 
 ### Available Tools
 
@@ -21,7 +21,7 @@ This server enables AI assistants to query and manage GoCD pipelines, stages, an
 
 #### Job Analysis
 - `parse_gocd_url` - Extract pipeline/stage/job info from GoCD URLs
-- `analyze_job_failures` - Get comprehensive failure analysis including test results and console logs
+- `analyze_job_failures` - Get failure analysis including test results and console logs
 - `get_job_history` - View job execution history
 - `get_job_instance` - Check job status and details
 - `get_job_console` - Read build logs and error output
@@ -30,10 +30,10 @@ This server enables AI assistants to query and manage GoCD pipelines, stages, an
 - `parse_junit_xml` - Extract structured test results from JUnit XML reports
 
 #### Example Queries
-- "Get all errors for this job <url>" - Automatically parses URL and analyzes failures
-- "Show me why the build failed" - Finds test failures and build errors
-- "List all pipelines" - Browse available pipelines
-- "Trigger the deployment stage" - Manually run a stage
+- "Get all errors for this job <url>": parses the URL, then analyzes failures
+- "Show me why the build failed": finds test failures and build errors
+- "List all pipelines": browse available pipelines
+- "Trigger the deployment stage": run a stage manually
 
 ### GoCD API Compatibility
 
@@ -52,7 +52,7 @@ For detailed API documentation, refer to the [GoCD API Reference](https://api.go
 - `npm run dev`: Run in development mode with tsx
 - `npm run build`: Compile TypeScript to JavaScript
 - `npm run format`: Format code with Prettier
-- `npm run inspect`: Open the MCP inspector for testing (server must be running separately)
+- `npm run inspect`: Open the MCP inspector for testing (start the server separately first)
 
 The server will listen on the configured host and port (default: `http://0.0.0.0:3000`).
 
@@ -72,7 +72,7 @@ MCP_HOST=0.0.0.0
 MCP_PORT=3000
 ```
 
-**Note:** Users connecting to the MCP server will provide their own GoCD API token when authenticating. The server does not require a shared token.
+**Note:** Each user provides their own GoCD API token when authenticating. The server holds no shared token.
 
 #### Debug Logging
 
@@ -98,7 +98,7 @@ Available namespaces:
 
 ### Deployment
 
-A `Dockerfile` has been added to this repository you can use it to run the server. Create your `.env` with the configuration and 
+The repository includes a `Dockerfile`. Create your `.env`, then:
 
 ```bash
 docker build -t gocd-mcp .
@@ -161,7 +161,7 @@ Add this server to your Copilot settings:
 
 **"Server not initialized" Error**
 
-This error typically occurs when the MCP session is not properly established. To fix:
+This error occurs when the MCP session was never established. To fix:
 
 1. Ensure the server is running (`npm run dev`)
 2. Disconnect and reconnect in your MCP client
@@ -174,7 +174,7 @@ If you receive an "UNAUTHORIZED" error:
 
 1. Verify your GoCD API token is valid
 2. Check the token has the necessary permissions in GoCD
-3. Ensure the Authorization header is properly formatted: `Bearer YOUR_TOKEN`
+3. Ensure the Authorization header is formatted as `Bearer YOUR_TOKEN`
 4. Generate a new token from GoCD (User Menu > Personal Access Tokens)
 
 **Connection Refused**
@@ -183,7 +183,7 @@ If you cannot connect to the server:
 
 1. Check the server is running: `curl http://localhost:3000/health`
 2. Verify `MCP_HOST` and `MCP_PORT` in your `.env` file
-3. Check for port conflicts - ensure port 3000 is available
+3. Check for port conflicts, port 3000 must be free
 4. If hosting remotely, ensure firewall rules allow the connection
 
 **GoCD API Errors**
