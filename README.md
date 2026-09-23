@@ -63,6 +63,8 @@ Set the following environment variables on the server:
 - `GOCD_SERVER_URL`: The URL of your GoCD server (e.g., `https://gocd.example.com`)
 - `MCP_HOST`: Host to bind the MCP server to (default: `0.0.0.0`)
 - `MCP_PORT`: Port for the MCP server to listen on (default: `3000`)
+- `GOCD_CA_CERT`: Path to a PEM file holding the CA certificate that signed your GoCD server's certificate
+- `GOCD_REJECT_UNAUTHORIZED`: Set to `false` to skip TLS certificate verification (default: verification is on)
 
 You can create a `.env` file in the project root:
 
@@ -73,6 +75,22 @@ MCP_PORT=3000
 ```
 
 **Note:** Each user provides their own GoCD API token when authenticating. The server holds no shared token.
+
+#### Self-signed certificates
+
+A GoCD server behind a self-signed or private-CA certificate fails with `unable to verify the first certificate` or `self-signed certificate in certificate chain`. Point `GOCD_CA_CERT` at the CA that signed it, which keeps verification on:
+
+```env
+GOCD_CA_CERT=/etc/ssl/certs/homelab-ca.pem
+```
+
+Under Docker, mount the file into the container and use the path inside it:
+
+```bash
+docker run -d --env-file=.env -v /etc/ssl/certs/homelab-ca.pem:/certs/ca.pem:ro -e GOCD_CA_CERT=/certs/ca.pem -p 3000:3000 gocd-mcp
+```
+
+If the CA certificate is not available, `GOCD_REJECT_UNAUTHORIZED=false` turns verification off for GoCD requests and logs a warning at startup. Any host on the network path can then impersonate the GoCD server and read the API tokens the server sends, so use it only on a network you control.
 
 #### Debug Logging
 

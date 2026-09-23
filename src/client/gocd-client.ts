@@ -109,6 +109,10 @@ export class GoCDClient {
             prefixUrl: `${this.baseUrl}/go/api`,
             timeout: { request: 30000 },
             retry: { limit: 2, methods: ["GET"] },
+            https: {
+                rejectUnauthorized: config.rejectUnauthorized,
+                certificateAuthority: config.caCert,
+            },
             hooks: {
                 beforeRequest: [
                     (options) => {
