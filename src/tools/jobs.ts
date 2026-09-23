@@ -1,4 +1,5 @@
 import { BoundGoCDClient } from "@/client/gocd-client.js";
+import { JUnitTestResults } from "@/client/types.js";
 import { formatJsonResponse, formatToolError, formatUnknownToolError } from "@/utils/responses.js";
 import { parseGocdUrl } from "@/utils/url-parser.js";
 import { debug } from "@/utils/debug.js";
@@ -204,6 +205,43 @@ export const jobTools = [
     },
 ];
 
+const CONSOLE_LOG_TAIL_CHARS = 20000;
+const MAX_FAILURE_DETAIL_CHARS = 4000;
+
+/**
+ * Console logs for a functional test job run to several megabytes, which overruns the MCP client
+ * before it can render anything. The failure almost always sits at the end, so keep the tail.
+ */
+function tailConsoleLog(consoleLog: string) {
+    if (consoleLog.length <= CONSOLE_LOG_TAIL_CHARS) {
+        return consoleLog;
+    }
+
+    const skipped = consoleLog.length - CONSOLE_LOG_TAIL_CHARS;
+    return `[truncated ${skipped} earlier characters, call get_job_console for the full log]\n${consoleLog.slice(-CONSOLE_LOG_TAIL_CHARS)}`;
+}
+
+/**
+ * Drop passing test cases and cap stack traces. A suite of a few hundred passing tests carries no
+ * information about the failure and is what makes this response too large to return.
+ */
+function summarizeTestResults(results: JUnitTestResults) {
+    return {
+        summary: results.summary,
+        failedTests: results.failedTests.map((test) => {
+            const isDetailTooLong = test.details.length > MAX_FAILURE_DETAIL_CHARS;
+            const details = isDetailTooLong
+                ? `${test.details.slice(0, MAX_FAILURE_DETAIL_CHARS)}\n[truncated]`
+                : test.details;
+
+            return { ...test, details };
+        }),
+        failedSuites: results.suites
+            .filter((suite) => suite.failures > 0 || suite.errors > 0)
+            .map(({ testCases, ...suite }) => suite),
+    };
+}
+
 export async function handleJobTool(
     client: BoundGoCDClient,
     toolName: string,
@@ -254,7 +292,7 @@ export async function handleJobTool(
                             );
                             if (testResults) {
                                 debug.tools(`✅ Found JUnit file at pattern: ${pattern}`);
-                                failures.testFailures = testResults;
+                                failures.testFailures = summarizeTestResults(testResults);
                                 break;
                             }
                         } catch {
@@ -266,28 +304,28 @@ export async function handleJobTool(
                     // Job may not have published test artifacts
                 }
 
-                try {
-                    const consoleLog = await client.getJobConsoleLog(
-                        pipelineName,
-                        pipelineCounter,
-                        stageName,
-                        stageCounter,
-                        jobName,
-                    );
-                    if (!failures.testFailures) {
-                        debug.tools("No JUnit files found, falling back to console logs for error analysis");
+                if (!failures.testFailures) {
+                    debug.tools("No JUnit files found, falling back to console logs for error analysis");
+                    try {
+                        const consoleLog = await client.getJobConsoleLog(
+                            pipelineName,
+                            pipelineCounter,
+                            stageName,
+                            stageCounter,
+                            jobName,
+                        );
+                        failures.consoleErrors = tailConsoleLog(consoleLog);
+                    } catch (error) {
+                        // Job may not have console logs available yet
                     }
-                    failures.consoleErrors = consoleLog;
-                } catch (error) {
-                    // Job may not have console logs available yet
                 }
 
                 if (failures.testFailures) {
-                    failures.summary = "Found test failures in JUnit XML reports.";
+                    failures.summary = "Found test results in JUnit XML reports.";
                 }
 
                 if (failures.consoleErrors) {
-                    failures.summary += "Console log available for error analysis.";
+                    failures.summary = `No JUnit report found. Showing the last ${CONSOLE_LOG_TAIL_CHARS} characters of the console log; call get_job_console for the full log.`;
                 }
 
                 if (!failures.testFailures && !failures.consoleErrors) {

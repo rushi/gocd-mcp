@@ -1,6 +1,6 @@
 import got, { Got, HTTPError } from "got";
 import pino from "pino";
-import { isEmpty, castArray, isString } from "lodash-es";
+import { isEmpty, isNil, castArray, isString } from "lodash-es";
 import qs from "qs";
 import { XMLParser } from "fast-xml-parser";
 import { GocdConfig } from "@/config.js";
@@ -21,6 +21,8 @@ import {
     JUnitTestResults,
     JUnitTestSuite,
     JUnitTestCase,
+    JUnitFailure,
+    JUnitOutcomeNode,
 } from "./types.js";
 
 const logger = pino(
@@ -450,12 +452,26 @@ export class GoCDClient {
         });
         const parsed = parser.parse(xmlContent);
 
-        let testsuites: any[] = [];
+        const rootSuites: any[] = [];
         if (parsed.testsuites) {
-            testsuites = castArray(parsed.testsuites.testsuite);
+            rootSuites.push(...castArray(parsed.testsuites.testsuite ?? []));
         } else if (parsed.testsuite) {
-            testsuites = castArray(parsed.testsuite);
+            rootSuites.push(...castArray(parsed.testsuite));
         }
+
+        // PHPUnit nests <testsuite> several levels deep, and a class-level suite can hold both its
+        // own test cases and nested suites for data providers. Collect every suite that owns cases.
+        const casedSuites: any[] = [];
+        const collectSuitesWithTestCases = (suite: any) => {
+            if (isNil(suite)) {
+                return;
+            }
+            if (!isEmpty(suite.testcase)) {
+                casedSuites.push(suite);
+            }
+            castArray(suite.testsuite ?? []).forEach(collectSuitesWithTestCases);
+        };
+        rootSuites.forEach(collectSuitesWithTestCases);
 
         const suites: JUnitTestSuite[] = [];
         const failedTests: JUnitTestResults["failedTests"] = [];
@@ -465,26 +481,25 @@ export class GoCDClient {
         let totalSkipped = 0;
         let totalTime = 0;
 
-        for (const suite of testsuites) {
+        // PHPUnit writes the reason as element text with no message attribute.
+        const readOutcome = (node: JUnitOutcomeNode): JUnitFailure => {
+            const content = isString(node) ? node : node["#text"] || "";
+            const message = (isString(node) ? "" : node["@_message"]) || content.split("\n")[0] || "";
+            return { message, type: (isString(node) ? "" : node["@_type"]) || "", content };
+        };
+
+        for (const suite of casedSuites) {
             const suiteName = suite["@_name"] || "Unknown Suite";
-            const tests = parseInt(suite["@_tests"] || "0", 10);
-            const failures = parseInt(suite["@_failures"] || "0", 10);
-            const errors = parseInt(suite["@_errors"] || "0", 10);
-            const skipped = parseInt(suite["@_skipped"] || "0", 10);
-            const time = parseFloat(suite["@_time"] || "0");
-
-            totalTests += tests;
-            totalFailures += failures;
-            totalErrors += errors;
-            totalSkipped += skipped;
-            totalTime += time;
-
             const testCases: JUnitTestCase[] = [];
-            const testcaseArray = suite.testcase ? castArray(suite.testcase) : [];
+            const testcaseArray = castArray(suite.testcase);
+            let failures = 0;
+            let errors = 0;
+            let skipped = 0;
+            let time = 0;
 
             for (const testcase of testcaseArray) {
                 const testName = testcase["@_name"] || "Unknown Test";
-                const className = testcase["@_classname"] || "";
+                const className = testcase["@_classname"] || testcase["@_class"] || "";
                 const testTime = parseFloat(testcase["@_time"] || "0");
 
                 let status: JUnitTestCase["status"] = "passed";
@@ -494,11 +509,8 @@ export class GoCDClient {
 
                 if (testcase.failure) {
                     status = "failed";
-                    failure = {
-                        message: testcase.failure["@_message"] || "",
-                        type: testcase.failure["@_type"] || "",
-                        content: isString(testcase.failure) ? testcase.failure : testcase.failure["#text"] || "",
-                    };
+                    failures++;
+                    failure = readOutcome(testcase.failure);
                     failedTests.push({
                         suiteName,
                         testName,
@@ -509,11 +521,8 @@ export class GoCDClient {
                     });
                 } else if (testcase.error) {
                     status = "error";
-                    error = {
-                        message: testcase.error["@_message"] || "",
-                        type: testcase.error["@_type"] || "",
-                        content: isString(testcase.error) ? testcase.error : testcase.error["#text"] || "",
-                    };
+                    errors++;
+                    error = readOutcome(testcase.error);
                     failedTests.push({
                         suiteName,
                         testName,
@@ -524,9 +533,11 @@ export class GoCDClient {
                     });
                 } else if (testcase.skipped !== undefined) {
                     status = "skipped";
+                    skipped++;
                     skippedMsg = isString(testcase.skipped) ? testcase.skipped : testcase.skipped["@_message"] || "";
                 }
 
+                time += testTime;
                 testCases.push({
                     name: testName,
                     classname: className,
@@ -537,6 +548,15 @@ export class GoCDClient {
                     skipped: skippedMsg,
                 });
             }
+
+            // Counts come from the test cases this suite owns directly. The tests/failures
+            // attributes on a nested suite include its children, which would double-count.
+            const tests = testCases.length;
+            totalTests += tests;
+            totalFailures += failures;
+            totalErrors += errors;
+            totalSkipped += skipped;
+            totalTime += time;
 
             suites.push({
                 name: suiteName,

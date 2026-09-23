@@ -183,6 +183,9 @@ export interface JUnitTestCase {
     skipped?: string;
 }
 
+/** A <failure> or <error> element as fast-xml-parser returns it: bare text, or attributes plus text. */
+export type JUnitOutcomeNode = string | { "@_message"?: string; "@_type"?: string; "#text"?: string };
+
 export interface JUnitFailure {
     message: string;
     type: string;

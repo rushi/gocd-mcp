@@ -68,6 +68,27 @@ describe("Job Tools", () => {
             expect(mockBoundClient.getJobHistory).toHaveBeenCalledWith("build-pipeline", "build", "test-job", 20);
         });
 
+        it("should keep only the tail of a console log too large to return", async () => {
+            const mockConsoleLog = `${"old noise\n".repeat(5000)}Error: the failure is here`;
+
+            vi.mocked(mockBoundClient.parseJUnitXml).mockRejectedValue(new Error("No JUnit files"));
+            vi.mocked(mockBoundClient.getJobConsoleLog).mockResolvedValue(mockConsoleLog);
+
+            const result = await handleJobTool(mockBoundClient, "analyze_job_failures", {
+                pipelineName: "build-pipeline",
+                pipelineCounter: 10,
+                stageName: "build",
+                stageCounter: 1,
+                jobName: "test-job",
+            });
+
+            const parsed = JSON.parse(result.content[0].text);
+            expect(mockConsoleLog.length).toBeGreaterThan(20000);
+            expect(parsed.consoleErrors.length).toBeLessThan(mockConsoleLog.length);
+            expect(parsed.consoleErrors).toContain("Error: the failure is here");
+            expect(parsed.consoleErrors).toContain("call get_job_console for the full log");
+        });
+
         it("should reject when required parameters are missing", async () => {
             const result = await handleJobTool(mockBoundClient, "get_job_history", {
                 pipelineName: "build-pipeline",
@@ -281,10 +302,14 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             const parsed = JSON.parse(result.content[0].text);
-            expect(parsed.testFailures).toEqual(mockJUnitResults);
-            expect(parsed.consoleErrors).toBe(mockConsoleLog);
-            expect(parsed.summary).toContain("test failures");
-            expect(parsed.summary).toContain("Console log");
+            expect(parsed.testFailures.summary).toEqual(mockJUnitResults.summary);
+            expect(parsed.testFailures.failedTests).toEqual(mockJUnitResults.failedTests);
+            expect(parsed.testFailures.failedSuites).toEqual([
+                { name: "AuthTests", tests: 10, failures: 2, errors: 0, skipped: 1, time: 5.2 },
+            ]);
+            expect(parsed.consoleErrors).toBeUndefined();
+            expect(mockBoundClient.getJobConsoleLog).not.toHaveBeenCalled();
+            expect(parsed.summary).toContain("test results");
         });
 
         it("should handle job with no test failures or console errors", async () => {
@@ -342,9 +367,12 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             const parsed = JSON.parse(result.content[0].text);
-            expect(parsed.testFailures).toEqual(mockJUnitResults);
+            expect(parsed.testFailures.summary).toEqual(mockJUnitResults.summary);
+            expect(parsed.testFailures.failedSuites).toEqual([
+                { name: "TestSuite", tests: 5, failures: 1, errors: 0, skipped: 0, time: 2.5 },
+            ]);
             expect(parsed.consoleErrors).toBeUndefined();
-            expect(parsed.summary).toContain("test failures");
+            expect(parsed.summary).toContain("test results");
         });
 
         it("should handle job with only console errors", async () => {
@@ -365,7 +393,7 @@ describe("Job Tools", () => {
             const parsed = JSON.parse(result.content[0].text);
             expect(parsed.testFailures).toBeUndefined();
             expect(parsed.consoleErrors).toBe(mockConsoleLog);
-            expect(parsed.summary).toContain("Console log");
+            expect(parsed.summary).toContain("console log");
         });
 
         it("should reject when required parameters are missing", async () => {
@@ -408,7 +436,7 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             const parsed = JSON.parse(result.content[0].text);
-            expect(parsed.testFailures).toEqual(mockJUnitResults);
+            expect(parsed.testFailures.summary).toEqual(mockJUnitResults.summary);
             // Should have tried 3 patterns before succeeding
             expect(mockBoundClient.parseJUnitXml).toHaveBeenCalledTimes(3);
         });
@@ -487,7 +515,7 @@ describe("Job Tools", () => {
 
             expect(result.isError).toBeUndefined();
             const parsed = JSON.parse(result.content[0].text);
-            expect(parsed.testFailures).toEqual(mockJUnitResults);
+            expect(parsed.testFailures.summary).toEqual(mockJUnitResults.summary);
             // Should have tried 8 patterns total (7 specific + 1 generic that succeeded)
             expect(mockBoundClient.parseJUnitXml).toHaveBeenCalledTimes(8);
             // The 8th call should be the first generic pattern
