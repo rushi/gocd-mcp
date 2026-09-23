@@ -1,5 +1,5 @@
 # Multi-stage build for security and smaller image size
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:22-slim
+FROM node:24-slim
 
 # Create non-root user with numeric UID for portability
 # UID 10001 is commonly used for containerized apps

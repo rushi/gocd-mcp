@@ -197,7 +197,7 @@ If you receive errors from the GoCD API:
 
 ### Requirements
 
-- Node.js >= 18.0.0 (v22+ recommended for security)
+- Node.js >= 24.0.0
 
 ### Author
 
